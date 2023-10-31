@@ -1,0 +1,44 @@
+* Architecture DelayedGSD package
+
+| File                 | Type        | Step    | Used by                             | Description                                                                  | Output                                                            |
+|----------------------+-------------+---------+-------------------------------------+------------------------------------------------------------------------------+-------------------------------------------------------------------|
+| analyzeData.R        | Internal    | 2.A,3.A | update.delayedGSD                   | Fit linear mixed model via nlme::gls to a dataset                            | lmmGSD object                                                     |
+| blockrand.R          | Internal    | 0       | GenData                             | Perform block randomisation                                                  | binary numeric vector                                             |
+| CalcBoundaries.R     | User        | 1       | updateBoundaries, Decision          | Calculate planned boundaries based on method 1 or 2                          | delayedGSD object (contains planned boundaries, information, ...) |
+| confint.delayedGSD.R | User        | 2.C,3.C |                                     | Extract estimate/CI/p.value                                                  | data.frame                                                        |
+| Decision.R           | User        | 2.C,3.C | update.delayedGSD                   | Decision regarding stopping recruitment / rejecting H0                       | delayedGSD object                                                 |
+| ErrorSpend.R         | Internal    |         | CalcBoundaries                      | Rho-family spending functions (Kim-DeMets) for alpha and beta                | Expected rejection rate                                           |
+| FinalCI.R            | Internal    | 2.C,3.C | update.delayedGSD                   | Confidence intervals at Decision                                             | numeric vector (lower, upper bound)                               |
+| FinalEstimate.R      | Internal    | 2.C,3.C | update.delayedGSD                   | Estimate at Decision                                                         | numeric?                                                          |
+| FinalPvalue.R        | Internal    | 2.C,3.C | update.delayedGSD                   | P-value at Decision                                                          | numeric                                                           |
+| FormatAsCaseStudy.R  | Simulation  | 0       |                                     | Reshape data into standard Lundbeck format                                   | dataset                                                           |
+| GenData.R            | Simulation  | 0       |                                     | Simulate data                                                                | dataset                                                           |
+| getInformation.R     | Internal    | 2.B,3.B |                                     | Extract information from a t-test or a mixed model                           | numeric                                                           |
+| Method1.R            | Internal    | 1       | CalcBoundaries                      | Calculate decision boundary based on method 1 at stage k                     | numeric (ck)                                                      |
+| Method2.R            | Internal    | 1       | CalcBoundaries                      | Calculate futility and decision boundary based on method 1 at stage k        | several numeric (lk and ck)                                       |
+| NonBindingHJ.R       | In progress |         |                                     |                                                                              |                                                                   |
+| plot.delayedGSD.R    | User        | 1,2,3   |                                     | Display planned/updated boundaries over information                          | Graphical display                                                 |
+| PlotProgress.R       | User        | 2,3     |                                     | Display the available and pipeline sample size as a function of time         | Graphical display                                                 |
+| print.delayedGSD.R   | User        | 1,2,3   |                                     | Summarize the content of a delayedGSD object                                 | Text in console                                                   |
+| print.lmmGSD.R       | Internal    | 2.A,3.A |                                     | Utility for lmmGSD                                                           | Text in console                                                   |
+| SelectData.R         | Simulation  | 0       |                                     | Select available longitudnal data for analysis at a specific follow-up time  | dataset                                                           |
+| ttest.R              | Internal    | -       | (not really used)                   | Slight modification to the stats::t.test to store the call and the arguments | ttest object                                                      |
+| updateBoundaries.R   | Internal    | 2.B,3.B | update.delayedGSD                   | Update boundaries in delayedGSD object according to the current information  | delayedGSD object                                                 |
+| update.delayedGSD.R  | User        | 2,3     |                                     | Perform interim or decision at once and update delayedGSD object             | delayedGSD object                                                 |
+| updateInformation.R  | Internal    | 2.B,3.B | updateBoundaries, update.delayedGSD | Add information at current/future stage in a delayedGSD object               | delayedGSD object                                                 |
+
+Note: update.delayedGSD will call analyzeData, updateInformation,
+updateBoundary, Decision, FinalPvalue, FinalCI, FinalEstimate.  It
+will
+
+Steps
+- 0: generate data
+- 1: planning
+- 2: interim analysis
+  + A: fit statistical model
+  + B: update boundaries
+  + C: decision + estimates
+- 3: decision analysis
+  + A: fit statistical model
+  + B: update boundaries
+  + C: decision + estimates
