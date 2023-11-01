@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar 21 2023 (09:42) 
 ## Version: 
-## Last-Updated: okt 31 2023 (16:44) 
+## Last-Updated: okt 31 2023 (17:06) 
 ##           By: Brice Ozenne
-##     Update #: 118
+##     Update #: 121
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -235,7 +235,7 @@ gridFinalPvalue <- function(object,
 
     ## ** evaluate p-value over the domain
     calcP <- function(z, k){
-        out <- do.call(FCT.p_value, list(Info.d = Info.d[1:k],
+        outP <- do.call(FCT.p_value, list(Info.d = Info.d[1:k],
                                          Info.i = Info.i[1:min(k,kMax-1)],
                                         #ck = ck[1:min(k,kMax-1)], ck.unrestricted = ck.unrestricted[1:min(k,kMax-1)],
                                          ck = ck[1:min(k,kMax)],
@@ -250,13 +250,20 @@ gridFinalPvalue <- function(object,
                                          bindingFutility = bindingFutility, 
                                          cNotBelowFixedc = cNotBelowFixedc,
                                          continuity.correction = continuity.correction)
-                       )
-        return(data.frame(z = z, k = k, p.value = out, correction = continuity.correction))
+                        )
+        out <- data.frame(z = z, k = k, p.value = outP, correction = continuity.correction)
+        attr(out,"terms") <- attr(outP,"terms")
+        return(out)
     }
     
-    out <- do.call(rbind,lapply(1:n.grid, function(iG){ ## iG <- 1
-        cbind(calcP(z = grid[iG,"z"], k = grid[iG,"k"]), fixC = grid[iG,"fixC"], alphaSpent = grid[iG,"alphaSpent"])
-    }))
+    ls.out <- lapply(1:n.grid, function(iG){ ## iG <- 1
+        outP <- calcP(z = grid[iG,"z"], k = grid[iG,"k"])
+        out <- cbind(outP, fixC = grid[iG,"fixC"], alphaSpent = grid[iG,"alphaSpent"])
+        attr(out,"terms") <- attr(outP,"terms")
+        return(out)
+    })
+    out <- do.call(rbind,ls.out)
+    attr(out,"terms") <- stats::setNames(lapply(ls.out, attr, "terms"), paste0("stage=",out$k,": z=",out$z))
 
     ## ** export
     attr(out,"class") <- append("gridDelayedGSD",attr(out,"class"))
