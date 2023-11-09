@@ -540,6 +540,8 @@ FinalPvalue2 <- function(Info.d,
                     ##       this case is therefore excluded
                     
                     if(!(method == 3 & statistic > ck[stage] & reason.interim[stage]!="futility")){
+                        ## NOTE: notice the negation ("!") before the condition, i.e. either method 1 or 2
+                        ##                                                                or method 3 where we conclude efficacy
                         iTerm2 <- pmvnorm2(lower = c(lk.continue[iSeq_interimM1], -Inf,       Fstatistic),   
                                            upper = c(uk[iSeq_interimM1],          lk[iStage], Inf),
                                            mean = delta * sqrt(Info.vec[iIndex]),

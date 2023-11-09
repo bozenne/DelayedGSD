@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: okt 11 2023 (11:47) 
 ## Version: 
-## Last-Updated: okt 11 2023 (15:41) 
+## Last-Updated: nov  9 2023 (13:57) 
 ##           By: Brice Ozenne
-##     Update #: 15
+##     Update #: 16
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -42,7 +42,7 @@
 #' @export
 DelayedGSD.options <- function(..., reinitialise = FALSE){
 
-    default <- list(FCT.p_value = "FinalPvalue",
+    default <- list(FCT.p_value = "FinalPvalue2",
                     continuity.correction = 1,
                     tolerance = 1e-3)
     
