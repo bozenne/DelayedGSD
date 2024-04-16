@@ -8,6 +8,7 @@
 #' @param getinfo [logical] should the information be computed at interim and decision? Otherwise no information is computed.
 #' @param data.decision [integer or data.frame] data or total number of patients for the future decision analysis (only relevant at interim).
 #' Used to compute the predicted total information at decision where only current (or future) drop-out value are excluded but future observations are kept.
+#' @param control [glsControl] control values for gls fit. Passed to the \code{\link{nlme::gls}} function.
 #' @param trace [logical] should the execution of the function be traced?
 #' 
 #' @examples
@@ -24,7 +25,7 @@
 
 ## * analyzeData (code)
 #' @export
-analyzeData <- function(data, ddf = "nlme", getinfo = TRUE, data.decision = NULL, trace = TRUE){
+analyzeData <- function(data, ddf = "nlme", getinfo = TRUE, data.decision = NULL, control = NULL, trace = TRUE){
 
     requireNamespace("nlme")
 
@@ -38,14 +39,25 @@ analyzeData <- function(data, ddf = "nlme", getinfo = TRUE, data.decision = NULL
     ## summary(long)
 
     ## ** fit gls model
-    ctrl <- nlme::glsControl(opt='optim')
-
-    m <- nlme::gls(X ~ baseline*visit + Z*visit,
-                   data = long,
-                   correlation = nlme::corSymm(form=~visit.num|id), 
-                   weights = nlme::varIdent(form=~1|visit),
-                   method = "REML",
-                   na.action = stats::na.exclude)
+    m <- try(nlme::gls(X ~ baseline*visit + Z*visit,
+                       data = long,
+                       correlation = nlme::corSymm(form=~visit.num|id), 
+                       weights = nlme::varIdent(form=~1|visit),
+                       method = "REML",
+                       control = control,
+                       na.action = stats::na.exclude), silent = TRUE)
+    if(is.null(control)){
+        ## nlminb optimizer (current default)
+        m <- nlme::gls(X ~ baseline*visit + Z*visit,
+                       data = long,
+                       correlation = nlme::corSymm(form=~visit.num|id), 
+                       weights = nlme::varIdent(form=~1|visit),
+                       method = "REML",
+                       na.action = stats::na.exclude,
+                       control = nlme::glsControl(opt = "optim"))
+    }else{
+        stop(m)        
+    }
     m$variable <- c(cluster = "id", time = "visit")
 
     ## ** store estimate from the gls model
