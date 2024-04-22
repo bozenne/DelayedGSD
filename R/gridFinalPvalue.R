@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar 21 2023 (09:42) 
 ## Version: 
-## Last-Updated: okt 31 2023 (17:06) 
+## Last-Updated: apr 22 2024 (18:47) 
 ##           By: Brice Ozenne
-##     Update #: 121
+##     Update #: 138
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -273,10 +273,13 @@ gridFinalPvalue <- function(object,
 ## * plotFinalPvalue
 plot.gridDelayedGSD <- function(object,
                                 col = NULL,
-                                title = title,
+                                xlab = "Stage",
+                                ylab = "Test statistic",
+                                title = NULL,
                                 xlim = NULL,
                                 pch = 20,
                                 cex = 2,
+                                cex.lab = 1.2,
                                 lwd = 2,
                                 digits = 2){
 
@@ -296,7 +299,8 @@ plot.gridDelayedGSD <- function(object,
     object$p.display <- paste0(round(100*object$p.value, digits = digits),"%")
 
 
-    plot(object$k,object$z, type = "l", xlab = "stage", ylab = "test statistic", axes = FALSE, xlim = xlim, main = title)
+    plot(object$k,object$z, type = "l", xlab = xlab, ylab = ylab, cex.lab=cex.lab,
+         axes = FALSE, xlim = xlim, main = title)
     for(iStage in 1:(kMax-1)){
         if(object[index.boundary[iStage],"fixC"]){
             points(object$k[index.boundary[iStage]-1],object$z[index.boundary[iStage]-1], pch = pch, cex = cex)

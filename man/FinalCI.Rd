@@ -15,12 +15,12 @@ FinalCI(
   kMax,
   conf.level,
   estimate,
-  optimizer = "optimise",
   method,
   bindingFutility,
   cNotBelowFixedc,
   continuity.correction,
   tolerance,
+  conclusion,
   FCT.p_value
 )
 }
@@ -43,8 +43,6 @@ ck is possibly with restriction (when cNotBelowFixedc=TRUE) and ck.unrestricted 
 \item{conf.level}{confidence level (to get a 100*(1-alpha)\% CI)}
 
 \item{estimate}{naive estimate (e.g. using  ML or REML).}
-
-\item{optimizer}{the observed treatment estimate at decision}
 
 \item{method}{method 1, 2 or 3}
 

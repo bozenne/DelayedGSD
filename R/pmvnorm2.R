@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: okt 11 2023 (13:48) 
 ## Version: 
-## Last-Updated: okt 11 2023 (13:50) 
+## Last-Updated: apr 22 2024 (12:55) 
 ##           By: Brice Ozenne
-##     Update #: 3
+##     Update #: 6
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -18,6 +18,13 @@
 ## * pmvnorm2 (code)
 pmvnorm2 <- function(lower, upper, mean, sigma, digits = 9){
 
+    if(!is.matrix(sigma) && is.vector(sigma) && length(sigma)==length(lower)){
+        info <- sigma
+        sigma <- diag(1, length(info))
+        sigma[lower.tri(sigma)] <- sqrt((1/info) %*% t(info))[lower.tri(sigma)]
+        sigma[upper.tri(sigma)] <- t(sigma)[upper.tri(sigma)]
+    }
+    
     out <- mvtnorm::pmvnorm(lower = lower, upper = upper, mean = mean, sigma = sigma)
 
     if(is.na(out)){

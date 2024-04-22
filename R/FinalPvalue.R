@@ -138,7 +138,7 @@
 #'             bindingFutility=F,
 #'             futility2efficacy=T) 
 
-## * FinalPvalue (code)
+## * FinalPvalue (orignal code)
 #' @export
 FinalPvalue <- function(Info.d,  
                         Info.i,  
@@ -421,10 +421,13 @@ FinalPvalue <- function(Info.d,
     }
     
     ## ** export
-    return(unname(min(pval,1)))
+    if(pval>1){
+        pval <- min(pval, DelayedGSD.options()$max.p)
+    }
+    return(unname(pval))
 }
 
-## * FinalPvalue2 (code)
+## * FinalPvalue2 (code streamlined by Brice)
 FinalPvalue2 <- function(Info.d,  
                          Info.i,  
                          ck,
@@ -572,10 +575,395 @@ FinalPvalue2 <- function(Info.d,
     })
 
     ## ** export
-    out <- pmin(1,Reduce("+",ls.pvalue))
+    out <- Reduce("+",ls.pvalue)
+    if(out>1){
+        out <- min(out, DelayedGSD.options()$max.p)
+    }
     attr(out,"error") <- try(sapply(ls.pvalue,attr,"error"), silent = TRUE)
     attr(out,"msg") <- try(sapply(ls.pvalue,attr,"msg"), silent = TRUE)
     attr(out,"terms") <- try(do.call(rbind,lapply(ls.pvalue,attr,"terms")), silent = TRUE)
+    return(out)
+
+}
+
+## * FinalPvalue3 (code streamlined by Brice trying to better handle the non-binding case)
+FinalPvalue3 <- function(Info.d,  
+                         Info.i,  
+                         ck,
+                         ck.unrestricted,   
+                         lk,  
+                         uk,
+                         reason.interim,
+                         kMax, 
+                         delta=0,  
+                         estimate,
+                         method,  
+                         bindingFutility,
+                         cNotBelowFixedc,
+                         continuity.correction){
+
+    requireNamespace("mvtnorm")
+    n.grid <- 10
+
+    ## ** extract 
+    stage <- length(Info.d)
+    reason.interim[is.na(reason.interim)] <- "NA"
+
+    if(bindingFutility){ 
+        return(FinalPvalue2(Info.d, Info.i, ck, ck.unrestricted, lk, uk, reason.interim, kMax, delta=0,
+                            estimate, method, bindingFutility, cNotBelowFixedc, continuity.correction))
+    }else if(kMax > 3){
+        stop("Function FinalPvalue3 does not handle more than 2 interim analyses. \n")
+    }else if(cNotBelowFixedc){
+        stop("Function FinalPvalue3 does not handle constrains on the decision boundaries. \n")
+    }else if(method == 3){
+        stop("Function FinalPvalue3 does not handle method 3. \n")
+    }else if(any(reason.interim %in% c("decreasing information"))){
+        stop("Function FinalPvalue3 does not handle special cases (decreasing information). \n")
+    }
+    
+    ## ** prepare
+
+    ## statistic
+    statistic <- estimate * sqrt(Info.d[stage])
+    if(continuity.correction){
+        Fstatistic <- statistic - (ck[stage] - ck.unrestricted[stage])
+    }else{
+        Fstatistic <- statistic
+    }
+
+    ## information
+    Info.vec <- c(Info.i,Info.d)
+    Info.type <- c(rep("interim",length(Info.i)),
+                   rep("decision",min(stage,kMax-1)),
+                   rep("final",1))[1:length(Info.vec)]
+    Info.indexInterim <- which(Info.type=="interim")
+    Info.indexDecision <- which(Info.type=="decision")
+    Info.indexFinal <- which(Info.type=="final")
+        
+    Info.matrix <- diag(1, length(Info.vec))
+    Info.matrix[lower.tri(Info.matrix)] <- sqrt((1/Info.vec) %*% t(Info.vec))[lower.tri(Info.matrix)]
+    Info.matrix[upper.tri(Info.matrix)] <- t(Info.matrix)[upper.tri(Info.matrix)]
+
+    ## ** evaluate p-value at each stage
+    term <- list()
+
+    Info.vecI <- Info.vec[Info.indexInterim[1]]
+    Info.vecID <- Info.vec[c(Info.indexInterim[1],Info.indexDecision[1])]
+
+    Info.matI <- Info.matrix[Info.indexInterim[1],Info.indexInterim[1],drop=FALSE]
+    Info.matID <- Info.matrix[c(Info.indexInterim[1],Info.indexDecision[1]),c(Info.indexInterim[1],Info.indexDecision[1]),drop=FALSE]
+
+    if(stage==1){
+
+        ## 1- probability to stop for efficacy and have a more extreme test statistic
+        term[[1]] <- pmvnorm2(lower = c(uk[1], Fstatistic),  
+                              upper = c(Inf, Inf),
+                              mean = delta * sqrt(Info.vecID),
+                              sigma = Info.matID)
+
+        ## 2- probability to observe futility 
+        if(statistic < ck[stage]){
+            ##  the most likely between having a more extreme test statistic at decision or all possibilities
+            term[[2]] <- pmvnorm2(lower = -Inf,
+                                  upper = lk[1],
+                                  mean = delta * sqrt(Info.vecI),
+                                  sigma = Info.matI)
+            ## pmvnorm2(lower = c(-Inf, Fstatistic),   
+            ##          upper = c(lk[1], Inf),
+            ##          mean = delta * sqrt(Info.vecID),
+            ##          sigma = Info.matID)
+        }else{
+            ## stoping and rejecting with a more extreme test statistic
+            term[[2]] <- pmvnorm2(lower = c(-Inf, Fstatistic),  
+                                  upper = c(lk[1], Inf),
+                                  mean = delta * sqrt(Info.vecID),
+                                  sigma = Info.matID)
+        }
+
+        ## 3- probability to continue instead of stopping now for futility
+        if(statistic < ck[stage]){
+            term[[3]] <- pmvnorm2(lower = c(lk[1]),
+                                  upper = c(uk[1]),
+                                  mean = delta * sqrt(Info.vecI),
+                                  sigma = Info.matI)
+        }else{
+            term[[3]] <- 0
+        }
+
+    }else{
+        
+        ## 1- probability to stop for efficacy at stage 1
+        term[[1]] <- pmvnorm2(lower = c(uk[1], ck[1]),  
+                              upper = c(Inf, Inf),
+                              mean = delta * sqrt(Info.vecID),
+                              sigma = Info.matID)
+
+        if(stage == 2 & kMax == 2){
+            Info.vecIF <- Info.vec[c(Info.indexInterim[1],Info.indexFinal[1])]
+            Info.matIF <- Info.matrix[c(Info.indexInterim[1],Info.indexFinal[1]),c(Info.indexInterim[1],Info.indexFinal[1]),drop=FALSE]
+
+            ## 2- probability to continue and have a more extreme test statistic at stage 2
+            term[[2]] <- pmvnorm2(lower = c(lk[1], Fstatistic),  
+                                  upper = c(uk[1], Inf),
+                                  mean = delta * sqrt(Info.vecIF),
+                                  sigma = Info.matIF)
+
+            ## 3- probability to observe futility at stage 1 and the most likely between stopping and concluding efficacy or continuing and having a more extreme test statistic
+            term3a <- pmvnorm2(lower = c(-Inf, ck[1]),  
+                               upper = c(lk[1], Inf),
+                               mean = delta * sqrt(Info.vecID),
+                               sigma = Info.matID)
+            term3b <- pmvnorm2(lower = c(-Inf, Fstatistic),  
+                               upper = c(lk[1], Inf),
+                               mean = delta * sqrt(Info.vecIF),
+                               sigma = Info.matIF)
+
+            if(term3a+term3b < 1e-7){ ## both terms are small
+                term[[3]] <- term3a+term3b
+            }else if(term3a > 1000*term3b){ ## one term is dominant
+                term[[3]] <- term3a
+            }else if(term3b > 1000*term3a){ ## the other term is dominant
+                term[[3]] <- term3b
+            }else{
+                seqZ <- c(-Inf,seq(from = delta * sqrt(Info.vecIF[1]) - 5, to = lk[1], length.out = n.grid))
+                term[[3]] <- sum(sapply(1:n.grid, function(iZ){
+                    iTerm3a <- pmvnorm2(lower = c(seqZ[iZ], ck[1]),  
+                                        upper = c(seqZ[iZ+1], Inf),
+                                        mean = delta * sqrt(Info.vecID),
+                                        sigma = Info.matID)
+                    iTerm3b <- pmvnorm2(lower = c(seqZ[iZ], Fstatistic),  
+                                        upper = c(seqZ[iZ+1], Inf),
+                                        mean = delta * sqrt(Info.vecIF),
+                                        sigma = Info.matIF)
+                    return(max(iTerm3a, iTerm3b))
+                }))
+            }
+        }else if(stage == 2 & kMax == 3){
+
+            ## 2- probability to continue at stage 1, stop for efficacy at stage 2 and have a more extreme test statistic at decision
+            Info.vecIID <- Info.vec[c(Info.indexInterim[1:2],Info.indexDecision[2])]
+            Info.matIID <- Info.matrix[c(Info.indexInterim[1:2],Info.indexDecision[2]),c(Info.indexInterim[1:2],Info.indexDecision[2]),drop=FALSE]
+            term[[2]] <- pmvnorm2(lower = c(lk[1], uk[2], Fstatistic),  
+                                  upper = c(uk[1], Inf, Inf),
+                                  mean = delta * sqrt(Info.vecIID),
+                                  sigma = Info.matIID)
+
+            ## 3- probability to continue at stage 1 and continue at stage 2
+            if(statistic < ck[stage]){
+                Info.vecII <- Info.vec[Info.indexInterim[1:2]]
+                Info.matII <- Info.matrix[Info.indexInterim[1:2],Info.indexInterim[1:2],drop=FALSE]
+                term[[3]] <- pmvnorm2(lower = lk[1:2],  
+                                      upper = uk[1:2],
+                                      mean = delta * sqrt(Info.vecII),
+                                      sigma = Info.matII)
+            }else{
+                term[[3]] <- 0
+            }
+        
+            ## 4- probability to continue at stage 1 and have futility at stage 2
+            if(statistic >= ck[stage]){
+                ## only option to conclude more extreme is to stop and have a reversal
+                term[[4]] <- pmvnorm2(lower = c(lk[1], -Inf, Fstatistic),  
+                                      upper = c(uk[1], lk[2], Inf),
+                                      mean = delta * sqrt(Info.vecIID),
+                                      sigma = Info.matIID)
+            }else{
+                ## can conclude more extreme either by continuing or stopping to hope for more extreme
+                ## so continuing will always give more likely extreme
+                term[[4]] <- pmvnorm2(lower = c(lk[1], -Inf),  
+                                      upper = c(uk[1], lk[2]),
+                                      mean = delta * sqrt(Info.vecII),
+                                      sigma = Info.matII)
+            }
+
+            ## 5- probability following futility at stage 1
+            ## - stop and conclude efficacy at stage 1
+            term5a <- pmvnorm2(lower = c(-Inf, ck[1]),  
+                               upper = c(lk[1], Inf),
+                               mean = delta * sqrt(Info.vecID),
+                               sigma = Info.matID)
+            ## - continue and stop for efficacy at stage 2 and conclude with more extreme statistic
+            term5b.1 <- pmvnorm2(lower = c(-Inf, ck[1], Fstatistic),  
+                                 upper = c(lk[1], Inf, Inf),
+                                 mean = delta * sqrt(Info.vecIID),
+                                 sigma = Info.matIID)
+            if(statistic >= ck[stage]){
+                ## continue and stop for futility at stage 2 and conclude with more extreme statistic
+                term5b.2 <- pmvnorm2(lower = c(-Inf, -Inf, Fstatistic),  
+                                     upper = c(lk[1], lk[2], Inf),
+                                     mean = delta * sqrt(Info.vecIID),
+                                     sigma = Info.matIID)
+            }else{
+                ## continue and continue after futility at stage 2
+                term5b.2 <- pmvnorm2(lower = c(-Inf, -Inf),  
+                                     upper = c(lk[1], lk[2]),
+                                     mean = delta * sqrt(Info.vecII),
+                                     sigma = Info.matII)
+            }
+
+            if(term5a+term5b.1+term5b.2 < 1e-7){ ## both terms are small
+                term[[5]] <- term5a+term5b.1+term5b.2
+            }else if(term5a > 1000*(term5b.1+term5b.2)){ ## one term is dominant
+                term[[5]] <- term5a
+            }else if((term5b.1+term5b.2) > 1000*term5a){ ## the other term is dominant
+                term[[5]] <- term5b.1+term5b.2
+            }else{
+                seqZ <- c(-Inf,seq(from = delta * sqrt(Info.vecIID[1]) - 5, to = lk[1], length.out = n.grid))
+                term[[5]] <- sum(sapply(1:n.grid, function(iZ){
+                    iTerm5a <- pmvnorm2(lower = c(seqZ[iZ], ck[1]),  
+                                        upper = c(seqZ[iZ+1], Inf),
+                                        mean = delta * sqrt(Info.vecID),
+                                        sigma = Info.matID)
+                    iTerm5b.1 <- pmvnorm2(lower = c(seqZ[iZ], ck[1], Fstatistic),  
+                                          upper = c(seqZ[iZ+1], Inf, Inf),
+                                          mean = delta * sqrt(Info.vecIID),
+                                          sigma = Info.matIID)
+                    if(statistic >= ck[stage]){
+                        iTerm5b.2 <- pmvnorm2(lower = c(seqZ[iZ], -Inf, Fstatistic),  
+                                              upper = c(seqZ[iZ+1], lk[2], Inf),
+                                              mean = delta * sqrt(Info.vecIID),
+                                              sigma = Info.matIID)
+                    }else{
+                        iTerm5b.2 <- pmvnorm2(lower = c(seqZ[iZ], -Inf),  
+                                              upper = c(seqZ[iZ+1], lk[2]),
+                                              mean = delta * sqrt(Info.vecII),
+                                              sigma = Info.matII)
+                    }
+                    return(max(iTerm5a, iTerm5b.1 + iTerm5b.2))
+                }))
+            }
+                    
+        }else if(stage == 3 & kMax == 3){
+
+            ## 2- probability to continue at stage 1 and stop for efficacy at stage 2
+            Info.vecIID <- Info.vec[c(Info.indexInterim[1:2],Info.indexDecision[2])]
+            Info.matIID <- Info.matrix[c(Info.indexInterim[1:2],Info.indexDecision[2]),c(Info.indexInterim[1:2],Info.indexDecision[2]),drop=FALSE]
+            term[[2]] <- pmvnorm2(lower = c(lk[1], uk[2], ck[2]),  
+                                  upper = c(uk[1], Inf, Inf),
+                                  mean = delta * sqrt(Info.vecIID),
+                                  sigma = Info.matIID)
+
+            ## 3- probability to continue at stage 1 and 2 and stop with a more extreme statistic at final
+            Info.vecIIF <- Info.vec[c(Info.indexInterim[1:2],Info.indexFinal[1])]
+            Info.matIIF <- Info.matrix[c(Info.indexInterim[1:2],Info.indexFinal[1]),c(Info.indexInterim[1:2],Info.indexFinal[1]),drop=FALSE]
+            term[[3]] <- pmvnorm2(lower = c(lk[1:2], Fstatistic),  
+                                  upper = c(uk[1:2], Inf),
+                                  mean = delta * sqrt(Info.vecIIF),
+                                  sigma = Info.matIIF)
+
+            ## 4- probability to continue at stage 1 and have futility at stage 2
+            ## either stop at stage two and hope for efficacy or continue and hope for more extreme
+            term4a <- pmvnorm2(lower = c(lk[1], -Inf, ck[2]),  
+                               upper = c(uk[1], lk[2], Inf),
+                               mean = delta * sqrt(Info.vecIID),
+                               sigma = Info.matIID)
+            term4b <- pmvnorm2(lower = c(lk[1], -Inf, Fstatistic),  
+                               upper = c(uk[1], lk[2], Inf),
+                               mean = delta * sqrt(Info.vecIIF),
+                               sigma = Info.matIIF)
+            
+
+            if(term4a+term4b < 1e-7){ ## both terms are small
+                term[[4]] <- term4a+term4b
+            }else if(term4a > 1000*term4b){ ## one term is dominant
+                term[[4]] <- term4a
+            }else if(term4b > 1000*term4a){ ## the other term is dominant
+                term[[4]] <- term4b
+            }else{
+                seqZ <- c(-Inf,seq(from = sqrt(Info.vecIIF[2]) - 5, to = lk[2], length.out = n.grid))
+                term[[4]] <- sum(sapply(1:n.grid, function(iZ){
+                    iTerm4a <- pmvnorm2(lower = c(lk[1], seqZ[iZ], ck[2]),  
+                                       upper = c(uk[1], seqZ[iZ+1], Inf),
+                                       mean = delta * sqrt(Info.vecIID),
+                                       sigma = Info.matIID)
+                    iTerm4b <- pmvnorm2(lower = c(lk[1], seqZ[iZ], Fstatistic),  
+                                       upper = c(uk[1], seqZ[iZ+1], Inf),
+                                       mean = delta * sqrt(Info.vecIIF),
+                                       sigma = Info.matIIF)
+                    return(max(iTerm4a, iTerm4b))
+                }))
+            }
+
+
+            ## 5- probability to have futility at stage 1
+            ## either stop at stage 1 and hope for efficacy
+            ## or continue and either stop for efficacy or continue for more extreme
+            term5a <- pmvnorm2(lower = c(-Inf, ck[1]),  
+                               upper = c(lk[1], Inf),
+                               mean = delta * sqrt(Info.vecID),
+                               sigma = Info.matID)
+            term5b.1 <- pmvnorm2(lower = c(-Inf, uk[2], ck[2]),  
+                                 upper = c(lk[1], Inf, Inf),
+                                 mean = delta * sqrt(Info.vecIID),
+                                 sigma = Info.matIID)
+            term5b.2 <- pmvnorm2(lower = c(-Inf, lk[2], Fstatistic),  
+                                 upper = c(lk[1], uk[2], Inf),
+                                 mean = delta * sqrt(Info.vecIIF),
+                                 sigma = Info.matIIF)
+            term5b.3 <- pmvnorm2(lower = c(-Inf, -Inf, ck[2]),  
+                                 upper = c(lk[1], lk[2], Inf),
+                                 mean = delta * sqrt(Info.vecIID),
+                                 sigma = Info.matIID)
+            term5c.1 <- term5b.1
+            term5c.2 <- term5b.2
+            term5c.3 <- pmvnorm2(lower = c(-Inf, -Inf, Fstatistic),  
+                                 upper = c(lk[1], lk[2], Inf),
+                                 mean = delta * sqrt(Info.vecIIF),
+                                 sigma = Info.matIIF)
+            
+
+            if(term5a + term5b.1+term5b.2+term5b.3 + term5c.1+term5c.2+term5c.3 < 1e-7){ ## all terms are small
+                term[[5]] <- term5a + term5b.1+term5b.2+term5b.3 + term5c.1+term5c.2+term5c.3
+            }else if(term5a > 1000*(term5b.1+term5b.2+term5b.3+term5c.1+term5c.2+term5c.3)){ ## one term is dominant
+                term[[5]] <- term5a
+            }else if(term5b.1+term5b.2+term5b.3 > 1000*(term5a+term5c.1+term5c.2+term5c.3)){ ## the other term is dominant
+                term[[5]] <- term5b.1+term5b.2+term5b.3
+            }else if(term5c.1+term5c.2+term5c.3 > 1000*(term5a+term5b.1+term5b.2+term5b.3)){ ## the last term is dominant
+                term[[5]] <- term5c.1+term5c.2+term5c.3
+            }else{
+                seqZ1 <- c(-Inf,seq(from = delta * sqrt(Info.vecIIF[1]) - 5, to = lk[1], length.out = n.grid))
+                seqZ2 <- c(-Inf,seq(from = delta * sqrt(Info.vecIIF[2]) - 5, to = lk[2], length.out = n.grid))
+
+                term[[5]] <- sum(sapply(1:n.grid, function(iZ){
+                    
+                    iTerm5a <- pmvnorm2(lower = c(seqZ1[iZ], ck[1]),  
+                                        upper = c(seqZ1[iZ+1], Inf),
+                                        mean = delta * sqrt(Info.vecID),
+                                        sigma = Info.matID)
+                    iTerm5b.1 <- pmvnorm2(lower = c(seqZ1[iZ], uk[2], ck[2]),  
+                                          upper = c(seqZ1[iZ+1], Inf, Inf),
+                                          mean = delta * sqrt(Info.vecIID),
+                                          sigma = Info.matIID)
+                    iTerm5b.2 <- pmvnorm2(lower = c(seqZ1[iZ], lk[2], Fstatistic),  
+                                          upper = c(seqZ1[iZ+1], uk[2], Inf),
+                                          mean = delta * sqrt(Info.vecIIF),
+                                          sigma = Info.matIIF)
+                    
+                    iTerm5b.3 <- sapply(1:n.grid, function(iiZ){
+                        iiTerm.X <- pmvnorm2(lower = c(seqZ1[iZ], seqZ2[iiZ], ck[2]),  
+                                             upper = c(seqZ1[iZ+1], seqZ2[iiZ+1], Inf),
+                                             mean = delta * sqrt(Info.vecIID),
+                                             sigma = Info.matIID)
+                        iiTerm.Y <- pmvnorm2(lower = c(seqZ1[iZ], seqZ2[iiZ], Fstatistic),  
+                                             upper = c(seqZ1[iZ+1], seqZ2[iiZ+1], Inf),
+                                             mean = delta * sqrt(Info.vecIIF),
+                                             sigma = Info.matIIF)
+                        return(max(iiTerm.X,iiTerm.Y))
+                    })
+                    
+
+                    return(max(iTerm5a, iTerm5b.1 + iTerm5b.2 + iTerm5b.3))
+                }))
+            }
+
+        }
+    }        
+    ## ** export
+    out <- Reduce("+",term)
+    if(out>1){
+        out <- min(out, DelayedGSD.options()$max.p)
+    }    
     return(out)
 
 }

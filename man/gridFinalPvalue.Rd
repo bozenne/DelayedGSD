@@ -9,15 +9,7 @@ gridFinalPvalue(
   continuity.correction,
   seq.futility = c(-3, 0),
   seq.kMax = c(-3, 1, 3, 6),
-  seq.efficacy = c(2.5, 3.25, 4, 5),
-  plot = TRUE,
-  col = NULL,
-  title = NULL,
-  xlim = NULL,
-  pch = 20,
-  cex = 2,
-  lwd = 2,
-  digits = 2
+  seq.efficacy = c(2.5, 3.25, 4, 5)
 )
 }
 \arguments{

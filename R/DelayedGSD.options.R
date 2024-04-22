@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: okt 11 2023 (11:47) 
 ## Version: 
-## Last-Updated: nov  9 2023 (13:57) 
+## Last-Updated: apr 22 2024 (18:14) 
 ##           By: Brice Ozenne
-##     Update #: 16
+##     Update #: 20
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -44,6 +44,7 @@ DelayedGSD.options <- function(..., reinitialise = FALSE){
 
     default <- list(FCT.p_value = "FinalPvalue2",
                     continuity.correction = 1,
+                    max.p = 1,
                     tolerance = 1e-3)
     
     if (reinitialise == TRUE) {
@@ -69,20 +70,23 @@ DelayedGSD.options <- function(..., reinitialise = FALSE){
             return(object)
         }else if (!is.null(names(args))) { ## write
 
-          if(any(names(args) %in% names(object) == FALSE)){
-              stop("Incorrect element selected: \"",paste0(names(args)[names(args) %in% names(object) == FALSE], collapse = "\" \""),"\"\n",
-                   "Available elements: \"",paste0(setdiff(names(object),names(args)), collapse = "\" \""),"\"\n")
-          }
+            if(any(names(args) %in% names(object) == FALSE)){
+                stop("Incorrect element selected: \"",paste0(names(args)[names(args) %in% names(object) == FALSE], collapse = "\" \""),"\"\n",
+                     "Available elements: \"",paste0(setdiff(names(object),names(args)), collapse = "\" \""),"\"\n")
+            }
 
             if("continuity.correction" %in% names(args) && (any(args$continuity.correction %in% 0:2 == FALSE) || length(args$continuity.correction)!=1)){
                 stop("Argument \'continuity.correction\' must be a integer with values 0, 1, or 2.\n")
             }
-            valid.FCT <- c("FinalPvalue","FinalPvalue2")
+            valid.FCT <- c("FinalPvalue","FinalPvalue2","FinalPvalue3")
             if("FCT.p_value" %in% names(args) && (any(args$FCT.p_value %in% valid.FCT == FALSE) || length(args$FCT.p_value)!=1)){
-                stop("Argument \'FCT.p_value\' must be a integer with values \"",paste(valid.FCT, collapse ="\", \""),"\".\n")
+                stop("Argument \'FCT.p_value\' must be one of \"",paste(valid.FCT, collapse ="\", \""),"\".\n")
             }
             if("tolerance" %in% names(args) && (!is.numeric(args$tolerance) || any(args$tolerance<=0) || length(args$tolerance)!=1)){
                 stop("Argument \'tolerance\' must be a strictly positive number.\n")
+            }
+            if("max.p" %in% names(args) && (!is.numeric(args$max.p) || length(args$max.p)!=1)){
+                stop("Argument \'max.p\' must be a numeric value.\n")
             }
             object[names(args)] <- args
       
