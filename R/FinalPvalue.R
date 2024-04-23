@@ -784,7 +784,7 @@ FinalPvalue3 <- function(Info.d,
                                mean = delta * sqrt(Info.vecID),
                                sigma = Info.matID)
             ## - continue and stop for efficacy at stage 2 and conclude with more extreme statistic
-            term5b.1 <- pmvnorm2(lower = c(-Inf, ck[1], Fstatistic),  
+            term5b.1 <- pmvnorm2(lower = c(-Inf, uk[1], Fstatistic),  
                                  upper = c(lk[1], Inf, Inf),
                                  mean = delta * sqrt(Info.vecIID),
                                  sigma = Info.matIID)
@@ -797,7 +797,7 @@ FinalPvalue3 <- function(Info.d,
             }else{
                 ## continue and continue after futility at stage 2
                 term5b.2 <- pmvnorm2(lower = c(-Inf, -Inf),  
-                                     upper = c(lk[1], lk[2]),
+                                     upper = c(lk[1], uk[2]),
                                      mean = delta * sqrt(Info.vecII),
                                      sigma = Info.matII)
             }
@@ -815,7 +815,7 @@ FinalPvalue3 <- function(Info.d,
                                         upper = c(seqZ[iZ+1], Inf),
                                         mean = delta * sqrt(Info.vecID),
                                         sigma = Info.matID)
-                    iTerm5b.1 <- pmvnorm2(lower = c(seqZ[iZ], ck[1], Fstatistic),  
+                    iTerm5b.1 <- pmvnorm2(lower = c(seqZ[iZ], uk[1], Fstatistic),  
                                           upper = c(seqZ[iZ+1], Inf, Inf),
                                           mean = delta * sqrt(Info.vecIID),
                                           sigma = Info.matIID)
@@ -826,7 +826,7 @@ FinalPvalue3 <- function(Info.d,
                                               sigma = Info.matIID)
                     }else{
                         iTerm5b.2 <- pmvnorm2(lower = c(seqZ[iZ], -Inf),  
-                                              upper = c(seqZ[iZ+1], lk[2]),
+                                              upper = c(seqZ[iZ+1], uk[2]),
                                               mean = delta * sqrt(Info.vecII),
                                               sigma = Info.matII)
                     }
@@ -925,7 +925,7 @@ FinalPvalue3 <- function(Info.d,
                 seqZ1 <- c(-Inf,seq(from = delta * sqrt(Info.vecIIF[1]) - 5, to = lk[1], length.out = n.grid))
                 seqZ2 <- c(-Inf,seq(from = delta * sqrt(Info.vecIIF[2]) - 5, to = lk[2], length.out = n.grid))
 
-                term[[5]] <- sum(sapply(1:n.grid, function(iZ){
+                term[[5]] <- sum(sapply(1:n.grid, function(iZ){ ## iZ <- 1
                     
                     iTerm5a <- pmvnorm2(lower = c(seqZ1[iZ], ck[1]),  
                                         upper = c(seqZ1[iZ+1], Inf),
@@ -953,7 +953,7 @@ FinalPvalue3 <- function(Info.d,
                     })
                     
 
-                    return(max(iTerm5a, iTerm5b.1 + iTerm5b.2 + iTerm5b.3))
+                    return(max(iTerm5a, iTerm5b.1 + iTerm5b.2 + sum(iTerm5b.3)))
                 }))
             }
 

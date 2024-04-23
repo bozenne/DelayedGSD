@@ -9,6 +9,7 @@ analyzeData(
   ddf = "nlme",
   getinfo = TRUE,
   data.decision = NULL,
+  control = NULL,
   trace = TRUE
 )
 }
@@ -22,6 +23,8 @@ Can be \code{"satterthwaite"} or \code{"nlme"}.}
 
 \item{data.decision}{[integer or data.frame] data or total number of patients for the future decision analysis (only relevant at interim).
 Used to compute the predicted total information at decision where only current (or future) drop-out value are excluded but future observations are kept.}
+
+\item{control}{[glsControl] control values for gls fit. Passed to the \code{\link{nlme::gls}} function.}
 
 \item{trace}{[logical] should the execution of the function be traced?}
 }
