@@ -46,17 +46,20 @@ analyzeData <- function(data, ddf = "nlme", getinfo = TRUE, data.decision = NULL
                        method = "REML",
                        control = control,
                        na.action = stats::na.exclude), silent = TRUE)
-    if(is.null(control)){
-        ## nlminb optimizer (current default)
-        m <- nlme::gls(X ~ baseline*visit + Z*visit,
-                       data = long,
-                       correlation = nlme::corSymm(form=~visit.num|id), 
-                       weights = nlme::varIdent(form=~1|visit),
-                       method = "REML",
-                       na.action = stats::na.exclude,
-                       control = nlme::glsControl(opt = "optim"))
-    }else{
-        stop(m)        
+
+    if(inherits(m, "try-error")){
+        if(is.null(control)){
+            ## nlminb optimizer (current default)
+            m <- nlme::gls(X ~ baseline*visit + Z*visit,
+                           data = long,
+                           correlation = nlme::corSymm(form=~visit.num|id), 
+                           weights = nlme::varIdent(form=~1|visit),
+                           method = "REML",
+                           na.action = stats::na.exclude,
+                           control = nlme::glsControl(opt = "optim"))            
+        }else{
+            stop(m)        
+        }
     }
     m$variable <- c(cluster = "id", time = "visit")
 

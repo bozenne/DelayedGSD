@@ -84,7 +84,7 @@ GenData <- function(n=52,
     }
     
     for(i in 2:n){
-        d[i,"t1"] <- d[i-1,"t1"] +    stats::runif(1,min=0,max= 2/ar)
+        d[i,"t1"] <- d[i-1,"t1"] + stats::runif(1,min=0,max= 2/ar)
         for(k in 2:NV){            
             d[i,paste0("t",k)] <- d[i,"t1"] + k-1 # initialize time of each follow-up measurement
         }

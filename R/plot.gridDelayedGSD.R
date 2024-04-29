@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 23 2024 (09:09) 
 ## Version: 
-## Last-Updated: apr 23 2024 (09:09) 
+## Last-Updated: apr 24 2024 (09:08) 
 ##           By: Brice Ozenne
-##     Update #: 2
+##     Update #: 15
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,7 +16,24 @@
 ### Code:
 
 ## * plot.gridDelayedGSD
-##' @description Display p-value over the sample space
+##' @title Display p-values
+##' @description Display p-value over the sample space.
+##'
+##' @param object outpout of gridDelayedGSD.
+##' @param col [character vector] color used to display the arrows.
+##' @param xlab [character] label for the x-axis.
+##' @param ylab [character] label for the y-axis.
+##' @param title [character] title of the plot.
+##' @param xlim [numeric vector of length 2] minimum and maximum value on the x-axis.
+##' @param ylim [numeric vector of length 2] minimum and maximum value on the y-axis.
+##' @param pch [integer, >0] shape used to display the boundaries at decision and final.
+##' @param cex [numeric, >0] size of the shape used to display the boundaries at decision and final.
+##' @param cex.lab [numeric, >0] size of the x-axis and y-axis labels.
+##' @param cex.p [numeric, >0] size of the used to display the p-values.
+##' @param font.p [numeric, >0] font used to display the p-values.
+##' @param digits [integer, >0] number of digit to be used when displaying the p-values.
+##' 
+##' 
 ##' @export
 plot.gridDelayedGSD <- function(object,
                                 col = NULL,
@@ -27,6 +44,8 @@ plot.gridDelayedGSD <- function(object,
                                 pch = 20,
                                 cex = 2,
                                 cex.lab = 1.2,
+                                cex.p = 1,
+                                font.p = 2,
                                 lwd = 2,
                                 digits = 2){
 
@@ -75,15 +94,15 @@ plot.gridDelayedGSD <- function(object,
                x1 = object[index.change0[iStage]+1,"k"], y1 = object[index.change0[iStage]+1,"z"],
                col = col[2+2*(iStage-1)], lwd = lwd)
         iSeq <- seq(c(1,index.change0+1)[iStage],index.change0[iStage]-1,by=1)
-        text(x = object[iSeq,"k"], y = object[iSeq,"z"],label = object[iSeq,"p.display"], pos = 2)
+        text(x = object[iSeq,"k"], y = object[iSeq,"z"],label = object[iSeq,"p.display"], pos = 2, cex = cex.p, font = font.p)
         text(x = object[index.change0[iStage],"k"], y = 0.35*object[max(iSeq),"z"]+0.65*object[index.change0[iStage],"z"],
-             label = object[index.change0[iStage],"p.display"], pos = 2, col = ifelse(object[index.boundary[iStage],"fixC"],"red","black"))
+             label = object[index.change0[iStage],"p.display"], pos = 2, col = ifelse(object[index.boundary[iStage],"fixC"],"red","black"), cex = cex.p, font = font.p)
     }
     arrows(x0 = object[index.change0[kMax-1]+1,"k"], y0 = object[index.change0[kMax-1]+1,"z"],
            x1 = object[index.change0[kMax],"k"], y1 = object[index.change0[kMax],"z"],
            col = col[1+2*(kMax-1)], lwd = lwd)
     text(x = object[(index.boundary[kMax-1]+1):index.change0[kMax],"k"], y = object[(index.boundary[kMax-1]+1):index.change0[kMax],"z"],
-         label = object[(index.boundary[kMax-1]+1):index.change0[kMax],"p.display"], pos = 4)
+         label = object[(index.boundary[kMax-1]+1):index.change0[kMax],"p.display"], pos = 4, cex = cex.p, font = font.p)
 
     for(iStage in 1:(kMax-1)){ ## iStage <- 1
         arrows(x0 = object[index.change0[kMax+iStage-1],"k"], y0 = object[index.change0[kMax+iStage-1],"z"],
@@ -93,9 +112,9 @@ plot.gridDelayedGSD <- function(object,
                x1 = object[c(index.change0,NROW(object))[kMax+iStage],"k"], y1 = object[c(index.change0,NROW(object))[kMax+iStage],"z"],
                col = col[2+2*(kMax+iStage-1)], lwd = lwd)
         text(x = object[index.change0[kMax+iStage-1]+1,"k"], y = object[index.change0[kMax+iStage-1]+1,"z"]*1.05,
-             label = object[index.change0[kMax+iStage-1]+1,"p.display"], pos = 2)
+             label = object[index.change0[kMax+iStage-1]+1,"p.display"], pos = 2, cex = cex.p, font = font.p)
         iSeq <- seq(index.change0[kMax+iStage-1]+2,c(index.change0,NROW(object))[kMax+iStage],by=1)
-        text(x = object[iSeq,"k"], y = object[iSeq,"z"], label = object[iSeq,"p.display"], pos = 2)
+        text(x = object[iSeq,"k"], y = object[iSeq,"z"], label = object[iSeq,"p.display"], pos = 2, cex = cex.p, font = font.p)
     }
 
     return(invisible(NULL))
