@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (09:41) 
 ## Version: 
-## Last-Updated: apr 29 2024 (18:14) 
+## Last-Updated: apr 29 2024 (19:31) 
 ##           By: Brice Ozenne
-##     Update #: 205
+##     Update #: 206
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -236,7 +236,7 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
     ## *** sample size
     if(is.null(n.obs)){
         sd_n.obs <- utils::tail(args.GenData$allsd,1)*sqrt(1-utils::tail(args.GenData$cor.0j.1,1)^2)
-        nFix.sample <- ceiling(2*2*(sd_n.obs/delta)^2*(qnorm(1-beta)-qnorm(alpha))^2) ## fixed design (extra factor 2* because the formula is per arm)
+        nFix.sample <- 2*2*(sd_n.obs/delta)^2*(qnorm(1-beta)-qnorm(alpha))^2 ## fixed design (extra factor 2* because the formula is per arm)
         if(!is.null(args.GenData$MissProb)){
             nFix.sample <- nFix.sample/(1-(args.GenData$MissProb[1,1]+args.GenData$MissProb[2,1]))
         }
