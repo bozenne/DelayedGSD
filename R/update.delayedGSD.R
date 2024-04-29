@@ -135,6 +135,10 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
         }else{
             object$Info.d[k] <- as.double(Info.d)
         }
+        if(object$Info.d[k]<object$Info.i[k]){
+            warning("Information has decreased between interim and decision, replacing information at decision with information at interim + epsilon. \n")
+            object$Info.d[k] <- object$Info.i[k]*(1 + 0.01/1000)
+        }
         
         object <- updateBoundaries(object, k = k, type.k = type.k, trace = trace-1, update.stage = FALSE)
         return(object)
@@ -152,7 +156,7 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
             Info.i <- delta$information["interim"]
         }
         if(type.k %in% c("interim","decision")){
-            Info.d <- delta$information["decision"]
+            Info.d <- delta$information["decision"]            
         }
         if(is.null(delta$data.decision)){
             object$n.obs[k] <- delta$sample.size["total"]
@@ -208,6 +212,10 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
     if(type.k %in% "interim" && !missing(Info.d)){ ## predicted information at decision is used by certain methods
         object$Info.d[k] <- as.double(Info.d)
     }else if(type.k %in% "decision"){
+        if(Info.d[k]<object$Info.i[k]){
+            warning("Information has decreased between interim and decision, replacing information at decision with information at interim + epsilon. \n")
+            Info.d[k] <- object$Info.i[k]*(1 + 0.01/1000)
+        }
         object$Info.d[k] <- as.double(Info.d)
     }
 

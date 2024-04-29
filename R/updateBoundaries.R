@@ -211,9 +211,6 @@ updateBoundaries <- function(object, delta, Info.i, Info.d, k, type.k, update.st
         if(Info.d[k] < Info.i[k]){ ## if information has decreased since interim analysis
           
             object$conclusion["comment.decision",k] <- "decreasing information"
-            warning("Information has decreased between interim and decision, replacing information at decision with information at interim + epsilon. \n")
-
-            Info.d[k] <- Info.i[k]+Info.i[k]/10000
             
             ## Possible solution: when estimating ck by balancing the probability of reversal, add a term corresponding to the type 1 error we should have spent vs. the type 1 error we spent.
             ## usual evaluation
