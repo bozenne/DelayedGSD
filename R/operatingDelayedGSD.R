@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (09:41) 
 ## Version: 
-## Last-Updated: apr 29 2024 (19:31) 
+## Last-Updated: apr 29 2024 (19:35) 
 ##           By: Brice Ozenne
-##     Update #: 206
+##     Update #: 207
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -25,6 +25,7 @@
 ##' Can also be of length 2, in that case the second element indicates which replicate of the simulation is being run.
 ##' @param method [data.frame] method(s) to be used.
 ##' Should be a data.frame containing 3 columns: method (integer from 1 to 3), binding (logical), fixC (logical).
+##' An additional column \code{overrule.futility} can be added to indicate what to do in presence of non-binding futility rules (default: never stop for futility under the null, always stop for futility under the alternative).
 ##' @param kMax [integer] max number of analyses (including final).
 ##' @param InfoR.i [numeric vector of length kMax] planned information rates at interim and final.
 ##' @param InfoR.d [numeric vector of length kMax] planned information rates at decision and final.

@@ -212,9 +212,9 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
     if(type.k %in% "interim" && !missing(Info.d)){ ## predicted information at decision is used by certain methods
         object$Info.d[k] <- as.double(Info.d)
     }else if(type.k %in% "decision"){
-        if(Info.d[k]<object$Info.i[k]){
+        if(Info.d<object$Info.i[k]){
             warning("Information has decreased between interim and decision, replacing information at decision with information at interim + epsilon. \n")
-            Info.d[k] <- object$Info.i[k]*(1 + 0.01/1000)
+            Info.d <- object$Info.i[k]*(1 + 0.01/1000)
         }
         object$Info.d[k] <- as.double(Info.d)
     }

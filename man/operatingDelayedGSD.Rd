@@ -35,7 +35,8 @@ If \code{NULL}, the sample size corresponds to the type II error of the first me
 Can also be of length 2, in that case the second element indicates which replicate of the simulation is being run.}
 
 \item{method}{[data.frame] method(s) to be used.
-Should be a data.frame containing 3 columns: method (integer from 1 to 3), binding (logical), fixC (logical).}
+Should be a data.frame containing 3 columns: method (integer from 1 to 3), binding (logical), fixC (logical).
+An additional column \code{overrule.futility} can be added to indicate what to do in presence of non-binding futility rules (default: never stop for futility under the null, always stop for futility under the alternative).}
 
 \item{kMax}{[integer] max number of analyses (including final).}
 
