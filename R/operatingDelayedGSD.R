@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (09:41) 
 ## Version: 
-## Last-Updated: apr 29 2024 (19:35) 
+## Last-Updated: maj  1 2024 (11:01) 
 ##           By: Brice Ozenne
-##     Update #: 207
+##     Update #: 217
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -243,7 +243,7 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
         }
         n.obs <- ceiling(e.bound[[n.method]]$planned$InflationFactor * nFix.sample)
     }
-    
+
     ## *** simulations
     vec.sim <- ((n.run-1)*n.sim + 1):(n.run*n.sim) ## indices of all iterations for this replicate
     
@@ -404,13 +404,15 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
 
     ## ** final export
     rownames(RES) <- NULL
-    class(RES) <- append("operatingDelayedGSD",class(RES))
     if(!is.null(path)){
         save(RES,file=file.path(path,paste0(name,"-",iter_sim,".rda")))
-        return(invisible(RES))
-    }else{
-        return(RES)
     }
+    out <- list(call =  match.call(),
+                args = c(list(n.obs = n.obs, n.sim = n.sim, kMax = kMax, method=method), args.GenData), 
+                boundaries = e.bound,
+                results = RES)
+    class(out) <- append("operatingDelayedGSD",class(RES))
+    return(out)
 }   
 
 

@@ -2,7 +2,7 @@ Package: DelayedGSD
 Type: Package
 Title: Planning and analysis of group sequential trial with pipeline data
 Version: 0.0.7
-Date: 2024-04-30
+Date: 2024-05-01
 Authors@R: c(
     person("Corine", "Baayen", role = "aut"),
     person("Paul", "Blanche", role = "aut"),
@@ -54,6 +54,7 @@ Collate:
     'getInformation.R'
     'gridFinalPvalue.R'
     'operatingDelayedGSD.R'
+    'operatingGSD.R'
     'plot.delayedGSD.R'
     'plot.gridDelayedGSD.R'
     'pmvnorm2.R'
