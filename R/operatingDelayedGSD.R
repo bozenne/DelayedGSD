@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (09:41) 
 ## Version: 
-## Last-Updated: maj  1 2024 (11:01) 
+## Last-Updated: maj  2 2024 (14:29) 
 ##           By: Brice Ozenne
-##     Update #: 217
+##     Update #: 221
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -326,7 +326,7 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
                              )$d
 
             iLs.res <- lapply(1:n.method, function(iM){  ## iM <- 1
-                iOut <- try(runDelayedGSD(iData, boundaries = e.bound[[iM]], PropForInterim = PropForInterim, lag = lag, overrule.futility = method$overrule.futility[iM]))
+                iOut <- try(runDelayedGSD(iData, boundaries = e.bound[[iM]], N.fw = N.fw, PropForInterim = PropForInterim, lag = lag, overrule.futility = method$overrule.futility[iM]))
                 if(inherits(iOut,"try-error")){
                     return(NULL)
                 }else{
@@ -388,7 +388,7 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
                                                      )$d
 
                                     iLs.res <- lapply(1:n.method, function(iM){  ## iM <- 1
-                                        iOut <- try(runDelayedGSD(iData, boundaries = e.bound[[iM]], PropForInterim = PropForInterim, lag = lag, overrule.futility = method$overrule.futility[iM]))
+                                        iOut <- try(runDelayedGSD(iData, boundaries = e.bound[[iM]], N.fw = N.fw, PropForInterim = PropForInterim, lag = lag, overrule.futility = method$overrule.futility[iM]))
                                         if(inherits(iOut,"try-error")){
                                             return(NULL)
                                         }else{

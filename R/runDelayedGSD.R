@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (13:23) 
 ## Version: 
-## Last-Updated: apr 29 2024 (17:35) 
+## Last-Updated: maj  2 2024 (15:49) 
 ##           By: Brice Ozenne
-##     Update #: 73
+##     Update #: 89
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -20,6 +20,7 @@
 ##'
 ##' @param data output of GenData (dataset containing all patients).
 ##' @param boundaries [delayedGSD] output of CalcBoundaries
+##' @param N.fw [integer] number of follow-up values per individual.
 ##' @param PropForInterim [numeric vector of length Kmax-1] percentage of all subjects, once they had the change to have complete follow-up, triggering interim and final analyses.
 ##' By default equal to \code{InfoR.i}.
 ##' @param lag [numeric] time lag between stop of recruitment and decision to stop recruitment.
@@ -38,7 +39,7 @@
 
 ## * runDelayedGSD (code)
 ##' @export
-runDelayedGSD <- function(data, boundaries,
+runDelayedGSD <- function(data, boundaries, N.fw,
                           PropForInterim, lag,
                           overrule.futility){
 
@@ -82,9 +83,11 @@ runDelayedGSD <- function(data, boundaries,
 
     ## ** prepare
     n.obs <- NROW(data)
-
+    Mn.obs <- matrix(as.numeric(NA), nrow = kMax, ncol = 4,
+                     dimnames = list(NULL, c("patients","outcome","pipeline","complete")))
+    
     ## ** interim & decision
-    time.interim <- data$t3[ceiling(n.obs*PropForInterim)]
+    time.interim <- data[[paste0("t",N.fw+1)]][ceiling(n.obs*PropForInterim)]
     data.interim <- vector(mode = "list", length = kMax-1)
     lmm.interim <- vector(mode = "list", length = kMax-1)
     gsd.interim <- vector(mode = "list", length = kMax-1)
@@ -95,6 +98,10 @@ runDelayedGSD <- function(data, boundaries,
 
         ## *** lmm at interim
         data.interim[[iK]] <- SelectData(data, t = time.interim[iK])
+        Mn.obs[iK,c("patients","outcome","pipeline","complete")] <- c(NROW(data.interim[[iK]]),
+                                                                      sum(!is.na(data.interim[[iK]][[paste0("t",N.fw+1)]])),
+                                                                      sum(is.na(data.interim[[iK]][[paste0("t",N.fw+1)]])),
+                                                                      sum(rowSums(is.na(data.interim[[iK]]))==0))
         lmm.interim[[iK]] <- analyzeData(data.interim[[iK]], ddf = "nlme",
                                          data.decision = sum(data$t1 <= time.interim[iK] + lag),
                                          getinfo = TRUE, trace = TRUE)
@@ -121,6 +128,10 @@ runDelayedGSD <- function(data, boundaries,
                 ## update information
                 gsd.interim[[iK]] <- update(gsd.interim[[iK]], delta = lmm.decision, k = iK, type.k = "decision", trace = FALSE)
             }else{
+                Mn.obs[iK+1,c("patients","outcome","pipeline","complete")] <- c(NROW(data.decision),
+                                                                                sum(!is.na(data.decision[[paste0("t",N.fw+1)]])),
+                                                                                sum(is.na(data.decision[[paste0("t",N.fw+1)]])),
+                                                                                sum(rowSums(is.na(data.decision))==0))
                 gsd.decision <- update(gsd.interim[[iK]], delta = lmm.decision, trace = FALSE)
                 gsd.interim <- gsd.interim[1:iK] ## 'remove' future interim analyses from the results
                 break
@@ -134,6 +145,10 @@ runDelayedGSD <- function(data, boundaries,
 
     ## ** final
     if(iDecision["decision"] != "stop"){
+        Mn.obs[iK+1,c("patients","outcome","pipeline","complete")] <- c(NROW(data),
+                                                                        sum(!is.na(data[[paste0("t",N.fw+1)]])),
+                                                                        sum(is.na(data[[paste0("t",N.fw+1)]])),
+                                                                        sum(rowSums(is.na(data))==0))                
         lmm.final <- analyzeData(data, ddf = "nlme", getinfo = TRUE, trace = TRUE)
         gsd.decision <- update(gsd.interim[[kMax-1]], delta = lmm.final, trace = FALSE)
     }
@@ -171,25 +186,31 @@ runDelayedGSD <- function(data, boundaries,
             iInfo <- stats::setNames(c(unlist(iInfoAll[iInfoAll$stage==iK,c("Decision","Decision.pc")]),rep(as.numeric(NA),2)),
                                      c("current","current.pc","prediction","prediction.pc"))
         }
-        
-        if(iType == "decision"){
-            iDecision <- coef(iGSD, type = "decision")[,paste0("stage ",iK," decision")]
-            iN <- iGSD$lmm[[iK+1]]$sample.size
-        }else{
+
+        if(iType == "interim"){
             iDecision <- coef(iGSD, type = "decision")[,paste0("stage ",iK)]
-            iN <- iGSD$lmm[[iK]]$sample.size
+            iDecisionM1 <- c("decision" = NA, comment = NA)
+            iN <- Mn.obs[iK,]
+        }else if(iType == "decision"){
+            iDecision <- coef(iGSD, type = "decision")[,paste0("stage ",iK," decision")]
+            iDecisionM1 <- coef(gsd.interim[[iK]], type = "decision")[,paste0("stage ",iK)]
+            iN <- Mn.obs[iK+1,]
+        }else if(iType == "final"){
+            iDecision <- coef(iGSD, type = "decision")[,paste0("stage ",iK)]
+            iDecisionM1 <- coef(gsd.interim[[iK-1]], type = "decision")[,paste0("stage ",iK-1)]
+            iN <- Mn.obs[iK,]
         }
         
-
         iResGSD <- data.frame(time = switch(iType,
                                             "interim" = time.interim[iK],
-                                            "decision" = max(data.decision$t3, na.rm = TRUE),
-                                            "final" = max(data$t3, na.rm = TRUE)),
+                                            "decision" = max(data.decision[[paste0("t",N.fw+1)]], na.rm = TRUE),
+                                            "final" = max(data[[paste0("t",N.fw+1)]], na.rm = TRUE)),
                               stage = iK,
                               type.stage = iType,
-                              n.obsCC = iN["interim.cc"],
-                              n.obs = iN["interim"],
-                              n.obsAll = iN["decision"],
+                              n.patients = iN["patients"],
+                              n.outcome = iN["outcome"],
+                              n.pipeline = iN["pipeline"],
+                              n.complete = iN["complete"],
                               uk = switch(iType,
                                           "interim" = iBoundary[iK,"Ebound"],
                                           "decision" = iBoundary[iK,"Cbound"],
@@ -212,11 +233,11 @@ runDelayedGSD <- function(data, boundaries,
                               info.pred = unname(iInfo["prediction"]),
                               infoPC.pred = unname(iInfo["prediction.pc"]),
                               decision = iDecision["decision"],
-                              reason = iDecision["comment"])
+                              reason = iDecision["comment"],
+                              reason.interim = iDecisionM1["comment"])
 
         return(iResGSD)
     })
-
 
     out <- cbind(method = boundaries$method,
                  binding = boundaries$bindingFutility,
