@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: maj  2 2024 (15:17) 
 ## Version: 
-## Last-Updated: maj  3 2024 (13:34) 
+## Last-Updated: maj  3 2024 (14:34) 
 ##           By: Brice Ozenne
-##     Update #: 66
+##     Update #: 68
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -137,9 +137,13 @@ summary.operatingDelayedGSD <- function(object, print = TRUE, digits = c(2,4), .
     colnames(table.operating) <- c(level.method, rep("NA", n.method))
     rownames(table.operating) <- c("median duration","median sample size","rejection rate", "reversal F->E", "reversal E->F", "low rejection", "coverage", "mean bias", "median bias")
 
+    ## necessary because "  " white space will be added to the name latter on
     row.nb <- which(rownames(table.operating) %in% c("median duration","median sample size", "mean bias"))
     row.pc <- which(rownames(table.operating) %in% c("rejection rate", "reversal F->E", "reversal E->F", "low rejection", "coverage", "median bias"))
-
+    row.coverage <- which(rownames(table.operating) == "coverage")
+    row.meanbias <- which(rownames(table.operating) == "mean bias")
+    row.medianbias <- which(rownames(table.operating) == "median bias")
+    
     ## ** display
     if(print){
     cat("\n - operating characteristics (true effect=",delta,"):\n",sep="")
@@ -147,17 +151,17 @@ summary.operatingDelayedGSD <- function(object, print = TRUE, digits = c(2,4), .
     rownames(print.operating) <- paste0("  ",rownames(print.operating))
     print.operating[row.pc,level.method] <- paste0(round(100*unlist(table.operating[row.pc,level.method]), digits = digits[1]),"%")
     print.operating[row.nb,level.method] <- as.character(round(unlist(table.operating[row.nb,level.method]), digits = digits[2]))
-    if(any(table.operating["coverage",(n.method+1):(2*n.method)]>0)){        
-        print.operating["coverage",1:n.method] <- paste0(print.operating["coverage",1:n.method],
-                                                         " (NA: ",round(100*table.operating["coverage",(n.method+1):(2*n.method)]/n.sim, digits = digits[1]),"%)")
+    if(any(table.operating[row.coverage,(n.method+1):(2*n.method)]>0)){        
+        print.operating[row.coverage,1:n.method] <- paste0(print.operating[row.coverage,1:n.method],
+                                                         " (NA: ",round(100*table.operating[row.coverage,(n.method+1):(2*n.method)]/n.sim, digits = digits[1]),"%)")
     }
-    if(any(table.operating["mean bias",(n.method+1):(2*n.method)]>0)){
-        print.operating["mean bias",1:n.method] <- paste0(print.operating["mean bias",1:n.method],
-                                                          " (NA: ",round(100*table.operating["mean bias",(n.method+1):(2*n.method)]/n.sim, digits = digits[1]),"%)")
+    if(any(table.operating[row.meanbias,(n.method+1):(2*n.method)]>0)){
+        print.operating[row.meanbias,1:n.method] <- paste0(print.operating[row.meanbias,1:n.method],
+                                                          " (NA: ",round(100*table.operating[row.meanbias,(n.method+1):(2*n.method)]/n.sim, digits = digits[1]),"%)")
     }
-    if(any(table.operating["median bias",(n.method+1):(2*n.method)]>0)){
-        print.operating["median bias",1:n.method] <- paste0(print.operating["median bias",1:n.method],
-                                                            " (NA: ",round(100*table.operating["median bias",(n.method+1):(2*n.method)]/n.sim, digits = digits[1]),"%)")
+    if(any(table.operating[row.medianbias,(n.method+1):(2*n.method)]>0)){
+        print.operating[row.medianbias,1:n.method] <- paste0(print.operating[row.medianbias,1:n.method],
+                                                            " (NA: ",round(100*table.operating[row.medianbias,(n.method+1):(2*n.method)]/n.sim, digits = digits[1]),"%)")
     }
 
     if(n.method == 1){
