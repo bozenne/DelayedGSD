@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: maj  2 2024 (15:17) 
 ## Version: 
-## Last-Updated: maj  2 2024 (17:02) 
+## Last-Updated: maj  3 2024 (11:31) 
 ##           By: Brice Ozenne
-##     Update #: 52
+##     Update #: 54
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -29,8 +29,12 @@ summary.operatingDelayedGSD <- function(object, digits = c(2,4), ...){
     test.name <- c(length(unique(object$results$method))>1,length(unique(object$results$binding))>1,length(unique(object$results$fixC))>1)
     col.method <- c("method","binding","fixC")[]
     ls.name <- list(paste0("method ", object$results$method),
-                        c(" non-binding"," binding")[object$results$binding+1],
-                        c(""," ck>=1.96")[(object$results$method==3)+(object$results$method!=3)*(object$results$fixC+1)])
+                    c(" non-binding"," binding")[object$results$binding+1],
+                    c(""," ck>=1.96")[(object$results$method==3)+(object$results$method!=3)*(object$results$fixC+1)])
+    if(length(digits)!=2){
+        stop("Argument \'digits\' should have length 2. \n",
+             "The first element refers to percentages and the second to numbers. \n")
+    }
 
     
     ## ** summary statistics
@@ -45,7 +49,7 @@ summary.operatingDelayedGSD <- function(object, digits = c(2,4), ...){
     xd.results <- xd.results[order(xd.results$stage),]
     n.method <- length(level.method)
 
-    x.print <- print(object)
+    x.print <- print(object, ...)
 
     ## rejection rate
     table.rejection <- do.call(rbind,by(xd.results, xd.results$name.method,

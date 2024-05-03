@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: maj  1 2024 (10:49) 
 ## Version: 
-## Last-Updated: maj  2 2024 (17:00) 
+## Last-Updated: maj  3 2024 (11:34) 
 ##           By: Brice Ozenne
-##     Update #: 50
+##     Update #: 74
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -17,7 +17,7 @@
 
 ## * print.operatingDelayedGSD
 ##' @export
-print.operatingDelayedGSD <- function(x, print = TRUE, ...){
+print.operatingDelayedGSD <- function(x, index.method = 1, print = TRUE, digits = c(2,2), ...){
 
     ## ** extract from object
     N.fw <- x$args$N.fw ## number of follow-up values per individual
@@ -30,12 +30,30 @@ print.operatingDelayedGSD <- function(x, print = TRUE, ...){
                         c(" non-binding"," binding")[x$results$binding+1],
                         c(""," ck>=1.96")[(x$results$method==3)+(x$results$method!=3)*(x$results$fixC+1)])
 
+    if(length(index.method)!=1){
+        stop("Argument \'index.method\' should have length 1. \n")
+    }
+    if(length(digits)!=2){
+        stop("Argument \'digits\' should have length 2. \n",
+             "The first element refers to percentages and the second to numbers. \n")
+    }
+    dots <- list(...)
+    if(length(dots)>0){
+        stop("Unknown argument(s) \'",paste(names(dots),collapse="\' \'"),"\'. \n")
+    }
+
     ## ** summary statistics
     if(all(test.name==FALSE)){
         x.results <- cbind(name.method = paste0("method ",x$results$method[1]),x$results)
+        level.method <- x.results$name.method[1]
     }else{
         x.results <- cbind(name.method = interaction(as.data.frame(do.call(cbind,ls.name[test.name])), sep ="", drop = TRUE),x$results)
+        level.method <- levels(x.results$name.method)
     }
+    if(index.method <= 0 || index.method>length(level.method)){
+        stop("Argument \'index.method\' should take integer values between 1 and ",length(level.method),". \n",sep="")
+    }
+    
     table.n <- do.call(rbind,by(x.results, interaction(x.results$stage,x.results$type.stage),
                                 function(iDF){
                                     return(data.frame(
@@ -64,6 +82,28 @@ print.operatingDelayedGSD <- function(x, print = TRUE, ...){
                                     }))
     table.visit$type <- factor(table.visit$type,c("interim","decision","final"))
     table.visit <- table.visit[order(table.visit$stage,table.visit$type),]
+    
+    table.info <- do.call(rbind,by(x.results, interaction(x.results$stage,x.results$type.stage),
+                                   function(iDF){
+                                       return(cbind(data.frame(
+                                           stage = iDF$stage[1],
+                                           type = iDF$type.stage[1]),
+                                           as.data.frame(as.list(tapply(iDF$info,iDF$name.method,mean,na.rm=TRUE)), check.names = FALSE)
+                                           ))
+                                   }))
+    table.info$type <- factor(table.info$type,c("interim","decision","final"))
+    table.info <- table.info[order(table.info$stage,table.info$type),]
+
+    table.infoPC <- do.call(rbind,by(x.results, interaction(x.results$stage,x.results$type.stage),
+                                   function(iDF){
+                                       return(cbind(data.frame(
+                                           stage = iDF$stage[1],
+                                           type = iDF$type.stage[1]),
+                                           as.data.frame(as.list(tapply(iDF$infoPC,iDF$name.method,mean,na.rm=TRUE)), check.names = FALSE)
+                                           ))
+                                   }))
+    table.infoPC$type <- factor(table.infoPC$type,c("interim","decision","final"))
+    table.infoPC <- table.infoPC[order(table.infoPC$stage,table.infoPC$type),]
 
     ## ** prepare txt
     if(any(test.name==FALSE)){
@@ -104,21 +144,30 @@ print.operatingDelayedGSD <- function(x, print = TRUE, ...){
         }
 
         cat(" - median [min;max] number of included participant, participant with incomplete follow-up, and participant with observed outcome. \n")
-        cat(" - frequency (% w.r.t. number of simulations) of occurence of each stageper method. \n")
+        cat(" - frequency (% w.r.t. number of simulations) for ",level.method[index.method],". \n", sep = "")
+        cat(" - information (% w.r.t. to planned max information) for ",level.method[index.method],". \n", sep = "")
         print.n <- data.frame(stage = paste(table.n$type, table.n$stage, sep =" "),
                               included = paste(table.n$median.patients, " [", table.n$min.patients, ";",table.n$max.patients,"]", sep =""),
                               pipeline = paste(table.n$median.pipeline, " [", table.n$min.pipeline, ";",table.n$max.pipeline,"]", sep =""),
                               outcome = paste(table.n$median.outcome, " [", table.n$min.outcome, ";",table.n$max.outcome,"]", sep ="")
                               )
 
-    print.visit <- data.frame(stage = paste(table.visit$type, table.visit$stage, sep =" "),
-                              table.visit[, levels(x.results$name.method)], check.names = FALSE)
-    print.visit[, levels(x.results$name.method)] <- paste0(unlist(print.visit[, levels(x.results$name.method)]), " (", round(100*unlist(print.visit[, levels(x.results$name.method)])/n.sim,2),"%)")
-    print(cbind(print.n,print.visit[-1]), row.names = FALSE)
+        print.visit <- data.frame(stage = paste(table.visit$type, table.visit$stage, sep =" "),
+                                  table.visit[, levels(x.results$name.method)], check.names = FALSE)
+        print.visit[, levels(x.results$name.method)] <- paste0(unlist(print.visit[, levels(x.results$name.method)]), " (", round(100*unlist(print.visit[, levels(x.results$name.method)])/n.sim,digits[1]),"%)")
+        
+        print.info <- data.frame(stage = paste(table.info$type, table.info$stage, sep =" "),
+                                 table.info[, levels(x.results$name.method)], check.names = FALSE)
+        print.info[, levels(x.results$name.method)] <- paste0(round(unlist(print.info[, levels(x.results$name.method)]),digits[2]), " (", round(100*unlist(table.infoPC[, levels(x.results$name.method)]),digits[1]),"%)")
+
+        print(cbind(print.n, frequency = print.visit[[1+index.method]], information = print.info[[1+index.method]]), row.names = FALSE)
     }
 
     ## ** export
-    return(invisible(cbind(table.n,table.visit[-(1:2)])))
+    return(invisible(list(n = table.n,
+                          visit = table.visit,
+                          info = table.info,
+                          infoPC = table.infoPC)))
 }
 
 ##----------------------------------------------------------------------
