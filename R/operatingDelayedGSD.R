@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (09:41) 
 ## Version: 
-## Last-Updated: maj  2 2024 (14:29) 
+## Last-Updated: maj  3 2024 (13:57) 
 ##           By: Brice Ozenne
-##     Update #: 221
+##     Update #: 222
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -117,6 +117,13 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
     ## *** seed
     if(all(is.na(seed))){
         seed <- NULL
+    }else{
+        if(!is.null(get0(".Random.seed"))){ ## avoid error when .Random.seed do not exists, e.g. fresh R session with no call to RNG
+            old <- .Random.seed # to save the current seed
+            on.exit(.Random.seed <<- old) # restore the current seed (before the call to the function)
+        }else{
+            on.exit(rm(.Random.seed, envir=.GlobalEnv))
+        }
     }
     if(!is.null(seed) && length(seed)>1 && length(seed)!=n.sim){
         stop("If argument \'seed\' has length greater than 1, it should have length the number of requested simulation: ",n.sim,".\n")
@@ -345,7 +352,7 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
 
         ## start cluster
         cl <- parallel::makeCluster(cpus)
-
+        on.exit(parallel::stopCluster(cl))
         ## link to foreach
         doSNOW::registerDoSNOW(cl)
 
@@ -360,6 +367,7 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
         }else{
             opts <- list()
         }
+        
 
         iX <- NULL ## [:forCRANcheck:] foreach        
         iLs.res <- foreach::`%dopar%`(
@@ -398,7 +406,6 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
                                     return(do.call(rbind, iLs.res))
                                 })
         if(trace>0){close(pb)}        
-        parallel::stopCluster(cl)
         RES <- rbind(RES,do.call(rbind, iLs.res))
     }
 
