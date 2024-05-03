@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: maj  2 2024 (15:17) 
 ## Version: 
-## Last-Updated: maj  3 2024 (11:31) 
+## Last-Updated: maj  3 2024 (12:28) 
 ##           By: Brice Ozenne
-##     Update #: 54
+##     Update #: 58
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,8 +16,15 @@
 ### Code:
 
 ## * summary.operatingDelayedGSD
+##' @title Summary of the Operating Characteristics of a GSD
+##' @description Display key simulation parameters (sample size, occurence of a stage, information) and the key operating characteristics of a GSD.
+##' @param x output of operatingDelayedGSD.
+##' @param print [logical] should the information be printed in the console.
+##' @param digits [logical] should the information be printed in the console.
+##' @param ... not used, for compatibility with the generic method
+##' 
 ##' @export
-summary.operatingDelayedGSD <- function(object, digits = c(2,4), ...){
+summary.operatingDelayedGSD <- function(object, print = TRUE, digits = c(2,4), ...){
 
     ## ** extract from object
     N.fw <- object$args$N.fw ## number of follow-up values per individual
@@ -49,7 +56,7 @@ summary.operatingDelayedGSD <- function(object, digits = c(2,4), ...){
     xd.results <- xd.results[order(xd.results$stage),]
     n.method <- length(level.method)
 
-    x.print <- print(object, ...)
+    x.print <- print(object, print = print, digits = digits, ...)
 
     ## rejection rate
     table.rejection <- do.call(rbind,by(xd.results, xd.results$name.method,
@@ -119,7 +126,8 @@ summary.operatingDelayedGSD <- function(object, digits = c(2,4), ...){
     rownames(table.operating) <- c("rejection rate", "reversal F->E", "reversal E->F", "low rejection", "coverage", "mean bias", "median bias")
     
     ## ** display
-    cat("\n - operating characteristics:\n")
+    if(print){
+    cat("\n - operating characteristics (true effect=",delta,"):\n",sep="")
     print.operating <- table.operating[,level.method,drop=FALSE]
     rownames(print.operating) <- paste0("  ",rownames(print.operating))
     print.operating[c(1:5,7),level.method] <- paste0(round(100*unlist(table.operating[c(1:5,7),level.method]), digits = digits[1]),"%")
@@ -140,6 +148,7 @@ summary.operatingDelayedGSD <- function(object, digits = c(2,4), ...){
         print(as.data.frame(print.operating, check.rows = FALSE), quotes = FALSE)
     }
     cat("\n")
+    }
 
     ## ** export
     return(invisible(table.operating))

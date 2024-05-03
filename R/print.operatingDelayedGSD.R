@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: maj  1 2024 (10:49) 
 ## Version: 
-## Last-Updated: maj  3 2024 (11:34) 
+## Last-Updated: maj  3 2024 (12:38) 
 ##           By: Brice Ozenne
-##     Update #: 74
+##     Update #: 85
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,6 +16,14 @@
 ### Code:
 
 ## * print.operatingDelayedGSD
+##' @title Simulation settings used to assess GSD Operating Characteristics
+##' @description Display key simulation parameters (sample size, occurence of a stage, information) of the simulation study used to assess the operating characteristics of a GSD.
+##' @param x output of operatingDelayedGSD.
+##' @param index.method [integer,>=1] index of the method relative to which the information and occurence of a stage should be display.
+##' @param print [logical] should the information be printed in the console.
+##' @param digits [integer vector of length 2] number of digits used to round, respectively, percentage and numbers. 
+##' @param ... not used, for compatibility with the generic method
+##' 
 ##' @export
 print.operatingDelayedGSD <- function(x, index.method = 1, print = TRUE, digits = c(2,2), ...){
 
@@ -60,6 +68,7 @@ print.operatingDelayedGSD <- function(x, index.method = 1, print = TRUE, digits 
                                         stage = iDF$stage[1],
                                         type = iDF$type.stage[1],
                                         frequency = NROW(iDF),
+                                        median.time = median(iDF$time), min.time = min(iDF$time), max.time = max(iDF$time),
                                         median.patients = median(iDF$n.patients), min.patients = min(iDF$n.patients), max.patients = max(iDF$n.patients),
                                         median.outcome = median(iDF$n.outcome), min.outcome = min(iDF$n.outcome), max.outcome = max(iDF$n.outcome),
                                         median.pipeline = median(iDF$n.pipeline), min.pipeline = min(iDF$n.pipeline), max.pipeline = max(iDF$n.pipeline),
@@ -107,29 +116,29 @@ print.operatingDelayedGSD <- function(x, index.method = 1, print = TRUE, digits 
 
     ## ** prepare txt
     if(any(test.name==FALSE)){
-            if(any(test.name[1]==FALSE)){
-                txt.method <- paste0(" ",x$results$method[1])
-            }else{
-                txt.method <-  "s"
+        if(any(test.name[1]==FALSE)){
+            txt.method <- paste0(" ",x$results$method[1])
+        }else{
+            txt.method <-  "s"
+        }
+        if(any(test.name[2]==FALSE)){
+            if(all(x$results$binding==FALSE)){
+                txt.binding <- " with non-binding futility rules"
+            }else if(all(x$results$binding==TRUE)){
+                txt.binding <-  " with binding futility rules"
             }
-            if(any(test.name[2]==FALSE)){
-                if(all(x$results$binding==FALSE)){
-                    txt.binding <- " with non-binding futility rules"
-                }else if(all(x$results$binding==FALSE)){
-                    txt.binding <-  " with binding futility rules"
-                }
-            }else{
-                txt.binding <- ""
+        }else{
+            txt.binding <- ""
+        }
+        if(any(test.name[3]==FALSE)){
+            if(all(x$results$fixC==FALSE)){
+                txt.fixC <- " with free decision boundaries"
+            }else if(all(x$results$binding==FALSE)){
+                txt.fixC <-  " with decision boundaries above 1.96"
             }
-            if(any(test.name[3]==FALSE)){
-                if(all(x$results$fixC==FALSE)){
-                    txt.fixC <- " with free decision boundaries"
-                }else if(all(x$results$binding==FALSE)){
-                    txt.fixC <-  " with decision boundaries above 1.96"
-                }
-            }else{
-                txt.fixC <- ""
-            }
+        }else{
+            txt.fixC <- ""
+        }
             
     }
 
@@ -147,6 +156,7 @@ print.operatingDelayedGSD <- function(x, index.method = 1, print = TRUE, digits 
         cat(" - frequency (% w.r.t. number of simulations) for ",level.method[index.method],". \n", sep = "")
         cat(" - information (% w.r.t. to planned max information) for ",level.method[index.method],". \n", sep = "")
         print.n <- data.frame(stage = paste(table.n$type, table.n$stage, sep =" "),
+                              time = paste(round(table.n$median.time, digits[2]), " [", round(table.n$min.time, digits[2]), ";",round(table.n$max.time, digits[2]),"]", sep =""),
                               included = paste(table.n$median.patients, " [", table.n$min.patients, ";",table.n$max.patients,"]", sep =""),
                               pipeline = paste(table.n$median.pipeline, " [", table.n$min.pipeline, ";",table.n$max.pipeline,"]", sep =""),
                               outcome = paste(table.n$median.outcome, " [", table.n$min.outcome, ";",table.n$max.outcome,"]", sep ="")
