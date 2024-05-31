@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: maj  1 2024 (10:49) 
 ## Version: 
-## Last-Updated: maj  3 2024 (12:38) 
+## Last-Updated: maj 31 2024 (11:18) 
 ##           By: Brice Ozenne
-##     Update #: 85
+##     Update #: 93
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -126,6 +126,8 @@ print.operatingDelayedGSD <- function(x, index.method = 1, print = TRUE, digits 
                 txt.binding <- " with non-binding futility rules"
             }else if(all(x$results$binding==TRUE)){
                 txt.binding <-  " with binding futility rules"
+            }else{
+                txt.binding <- ""
             }
         }else{
             txt.binding <- ""
@@ -133,8 +135,10 @@ print.operatingDelayedGSD <- function(x, index.method = 1, print = TRUE, digits 
         if(any(test.name[3]==FALSE)){
             if(all(x$results$fixC==FALSE)){
                 txt.fixC <- " with free decision boundaries"
-            }else if(all(x$results$binding==FALSE)){
+            }else if(all(x$results$fixC==FALSE)){
                 txt.fixC <-  " with decision boundaries above 1.96"
+            }else{
+                txt.fixC <- ""
             }
         }else{
             txt.fixC <- ""
@@ -163,12 +167,12 @@ print.operatingDelayedGSD <- function(x, index.method = 1, print = TRUE, digits 
                               )
 
         print.visit <- data.frame(stage = paste(table.visit$type, table.visit$stage, sep =" "),
-                                  table.visit[, levels(x.results$name.method)], check.names = FALSE)
-        print.visit[, levels(x.results$name.method)] <- paste0(unlist(print.visit[, levels(x.results$name.method)]), " (", round(100*unlist(print.visit[, levels(x.results$name.method)])/n.sim,digits[1]),"%)")
-        
+                                  table.visit[, level.method, drop=FALSE], check.names = FALSE)
+        print.visit[, level.method] <- paste0(unlist(print.visit[, level.method,drop=FALSE]), " (", round(100*unlist(print.visit[, level.method,drop=FALSE])/n.sim,digits[1]),"%)")
+
         print.info <- data.frame(stage = paste(table.info$type, table.info$stage, sep =" "),
-                                 table.info[, levels(x.results$name.method)], check.names = FALSE)
-        print.info[, levels(x.results$name.method)] <- paste0(round(unlist(print.info[, levels(x.results$name.method)]),digits[2]), " (", round(100*unlist(table.infoPC[, levels(x.results$name.method)]),digits[1]),"%)")
+                                 table.info[, level.method,drop=FALSE], check.names = FALSE)
+        print.info[, level.method] <- paste0(round(unlist(print.info[, level.method,drop=FALSE]),digits[2]), " (", round(100*unlist(table.infoPC[, level.method,drop=FALSE]),digits[1]),"%)")
 
         print(cbind(print.n, frequency = print.visit[[1+index.method]], information = print.info[[1+index.method]]), row.names = FALSE)
     }

@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (09:41) 
 ## Version: 
-## Last-Updated: maj  3 2024 (13:57) 
+## Last-Updated: maj 31 2024 (11:09) 
 ##           By: Brice Ozenne
-##     Update #: 222
+##     Update #: 233
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -120,7 +120,7 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
     }else{
         if(!is.null(get0(".Random.seed"))){ ## avoid error when .Random.seed do not exists, e.g. fresh R session with no call to RNG
             old <- .Random.seed # to save the current seed
-            on.exit(.Random.seed <<- old) # restore the current seed (before the call to the function)
+            on.exit(try(.Random.seed <<- old, silent = TRUE)) # restore the current seed (before the call to the function)
         }else{
             on.exit(rm(.Random.seed, envir=.GlobalEnv))
         }
@@ -258,16 +258,16 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
     if(!is.null(seed)){
         if(!is.null(get0(".Random.seed"))){ ## avoid error when .Random.seed do not exists, e.g. fresh R session with no call to RNG
             old <- .Random.seed # to save the current seed
-            on.exit(.Random.seed <<- old) # restore the current seed (before the call to the function)
-        }else{
-            on.exit(rm(.Random.seed, envir=.GlobalEnv))
-        }
-        if(length(seed)==1 && n.sim*n.run != 1){
-            set.seed(seed)
-            allseeds <- sample.int(n = 1e5, size = n.sim*n.run, replace=FALSE) #x=1:(.Machine$integer.max) seems to be maximal possible
-        }else{
-            allseeds <- rep(NA, n.sim*n.run)
-            allseeds[vec.sim] <- seed
+            on.exit(try(.Random.seed <<- old, silent = TRUE)) # restore the current seed (before the call to the function)
+            }else{
+                on.exit(rm(.Random.seed, envir=.GlobalEnv))
+            }
+            if(length(seed)==1 && n.sim*n.run != 1){
+                set.seed(seed)
+                allseeds <- sample.int(n = 1e5, size = n.sim*n.run, replace=FALSE) #x=1:(.Machine$integer.max) seems to be maximal possible
+            }else{
+                allseeds <- rep(NA, n.sim*n.run)
+                allseeds[vec.sim] <- seed
             
         }        
     }
@@ -302,15 +302,17 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
         for(iSim in 1:n.sim){ ## iSim <- 1
             if(!is.null(seed)){
                 iSeed <- allseeds[vec.sim[iSim]]
+                iText.seed <- paste0(" seed ",iSeed)
             }else{
                 iSeed <- NULL
+                iText.seed <- ""
             }
 
             if(trace){
                 if(multirun){
-                    cat("simulation ",iSim,"(",vec.sim[iSim],")/",n.sim,": seed ",iSeed,"\n",sep="")
+                    cat("simulation ",iSim,"(",vec.sim[iSim],")/",n.sim,": ",iText.seed,"\n",sep="")
                 }else{
-                    cat("simulation ",iSim,"/",n.sim,": seed ",iSeed,"\n",sep="")
+                    cat("simulation ",iSim,"/",n.sim,": ",iText.seed,"\n",sep="")
                 }
             }
 
@@ -336,8 +338,10 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
                 iOut <- try(runDelayedGSD(iData, boundaries = e.bound[[iM]], N.fw = N.fw, PropForInterim = PropForInterim, lag = lag, overrule.futility = method$overrule.futility[iM]))
                 if(inherits(iOut,"try-error")){
                     return(NULL)
-                }else{
+                }else if(!is.null(iSeed)){
                     return(cbind(iOut, seed = iSeed))
+                }else{
+                    return(iOut)
                 }
             })
 
