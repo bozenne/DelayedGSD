@@ -10,7 +10,7 @@
 #' @param reason.interim motivation for stopping or continuing at interim. Use to handle special cases (skipped interim because reach Imax, ...)
 #' @param kMax maximum number of analyses
 #' @param delta true effect under which to calculate the probability (should always be 0 for p-value, only change for calculation of CI)
-#' @param estimate naive estimate (e.g. using  ML or REML).
+#' @param statistic naive test statistic (e.g. using  ML or REML).
 #' @param method  method 1, 2 or 3
 #' @param bindingFutility [logical] whether the futility stopping rule is binding.
 #' @param cNotBelowFixedc [logical] whether the value c at the decision analysis can be below that of a fixed sample test (H & J page 10)
@@ -149,7 +149,7 @@ FinalPvalue <- function(Info.d,
                         reason.interim,
                         kMax, 
                         delta=0,  
-                        estimate,
+                        statistic,
                         method,  
                         bindingFutility,
                         cNotBelowFixedc,
@@ -160,7 +160,6 @@ FinalPvalue <- function(Info.d,
   
     ## ** reconstruct test statistic
     k <- length(Info.d)
-    statistic <- estimate * sqrt(Info.d[k])
                                    
     if(continuity.correction == 3){
         statistic <- statistic - (ck.unrestricted[k] - ck[k])
@@ -413,7 +412,7 @@ FinalPvalue <- function(Info.d,
                              reason.interim = reason.interim,
                              kMax = kMax, 
                              delta = delta,  
-                             estimate = estimate,
+                             statistic = statistic,
                              method = method,  
                              bindingFutility = bindingFutility,
                              cNotBelowFixedc = cNotBelowFixedc,
@@ -437,7 +436,7 @@ FinalPvalue2 <- function(Info.d,
                          reason.interim,
                          kMax, 
                          delta=0,  
-                         estimate,
+                         statistic,
                          method,  
                          bindingFutility,
                          cNotBelowFixedc,
@@ -452,7 +451,6 @@ FinalPvalue2 <- function(Info.d,
     ## ** prepare
 
     ## statistic
-    statistic <- estimate * sqrt(Info.d[stage])
     if(continuity.correction){
         Fstatistic <- statistic - (ck[stage] - ck.unrestricted[stage])
     }else{
@@ -596,7 +594,7 @@ FinalPvalue3 <- function(Info.d,
                          reason.interim,
                          kMax, 
                          delta=0,  
-                         estimate,
+                         statistic,
                          method,  
                          bindingFutility,
                          cNotBelowFixedc,
@@ -611,7 +609,7 @@ FinalPvalue3 <- function(Info.d,
 
     if(bindingFutility){ 
         return(FinalPvalue2(Info.d, Info.i, ck, ck.unrestricted, lk, uk, reason.interim, kMax, delta=0,
-                            estimate, method, bindingFutility, cNotBelowFixedc, continuity.correction))
+                            statistic, method, bindingFutility, cNotBelowFixedc, continuity.correction))
     }else if(kMax > 3){
         stop("Function FinalPvalue3 does not handle more than 2 interim analyses. \n")
     }else if(cNotBelowFixedc){
@@ -625,7 +623,6 @@ FinalPvalue3 <- function(Info.d,
     ## ** prepare
 
     ## statistic
-    statistic <- estimate * sqrt(Info.d[stage])
     if(continuity.correction){
         Fstatistic <- statistic - (ck[stage] - ck.unrestricted[stage])
     }else{

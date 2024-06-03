@@ -138,6 +138,7 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
         if(object$Info.d[k]<object$Info.i[k]){
             warning("Information has decreased between interim and decision, replacing information at decision with information at interim + epsilon. \n")
             object$Info.d[k] <- object$Info.i[k]*(1 + 0.01/1000)
+            object$conclusion["comment.decision",k] <- "decreasing information"
         }
         
         object <- updateBoundaries(object, k = k, type.k = type.k, trace = trace-1, update.stage = FALSE)
@@ -215,6 +216,7 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
         if(Info.d<object$Info.i[k]){
             warning("Information has decreased between interim and decision, replacing information at decision with information at interim + epsilon. \n")
             Info.d <- object$Info.i[k]*(1 + 0.01/1000)
+            object$conclusion["comment.decision",k] <- "decreasing information"
         }
         object$Info.d[k] <- as.double(Info.d)
     }
@@ -264,7 +266,7 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
                         uk = uk[1:min(k,kMax-1)],
                         reason.interim = object$conclusion["reason.interim",1:k],
                         kMax = kMax, 
-                        estimate = delta[1,"estimate"],
+                        statistic = delta[1,"statistic"],
                         method = object$method,
                         bindingFutility = object$bindingFutility,
                         cNotBelowFixedc=object$cNotBelowFixedc,
@@ -278,11 +280,11 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
                 attr(delta.MUE,"error") <- c(p.value = unname(attr(resP,"error")))
             }
         }
-            
+
         ## *** CI
         if(ci & as.double(resP) < 1){
-
-            resCI <- do.call(FinalCI, c(ls.args, list(FCT.p_value = FCT.p_value, conf.level = object$conf.level, tolerance = tolerance, conclusion = object$conclusion["decision",k])))
+            resCI <- do.call(FinalCI, c(ls.args, list(FCT.p_value = FCT.p_value,
+                                                      estimate = delta[1,"estimate"], conf.level = object$conf.level, tolerance = tolerance, conclusion = object$conclusion["decision",k])))
             delta.MUE[1,"lower"] <- resCI["lower"]
             delta.MUE[1,"upper"] <- resCI["upper"]
 
@@ -295,7 +297,7 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
         
         ## *** Estimate
         if(estimate){
-            resMUE <- do.call(FinalEstimate, c(ls.args, list(FCT.p_value = FCT.p_value, tolerance = tolerance)))
+            resMUE <- do.call(FinalEstimate, c(ls.args, list(FCT.p_value = FCT.p_value, estimate = delta[1,"estimate"], tolerance = tolerance)))
 
             delta.MUE[1,"estimate"] <- resMUE
             if(is.null(attr(delta.MUE,"error"))){

@@ -11,6 +11,7 @@
 #' @param kMax maximum number of analyses
 #' @param conf.level confidence level (to get a 100*(1-alpha)\% CI)
 #' @param estimate naive estimate (e.g. using  ML or REML).
+#' @param statistic naive test statistic (e.g. using  ML or REML).
 #' @param method  method 1, 2 or 3
 #' @param bindingFutility [logical]  whether the futility stopping rule is binding.
 #' @param cNotBelowFixedc [logical] whether the value c at the decision analysis can be below that of a fixed sample test (H & J page 10)
@@ -31,6 +32,7 @@ FinalCI <- function(Info.d,
                     kMax, 
                     conf.level,
                     estimate,
+                    statistic,
                     method,
                     bindingFutility,
                     cNotBelowFixedc,
@@ -40,6 +42,7 @@ FinalCI <- function(Info.d,
                     FCT.p_value){
 
     alpha <- 1 - conf.level
+    se <- estimate/statistic ## equal to sqrt(1/Info.d[length(Info.d)]) except when decreasing information
 
     ## ** objective function
     f <- function(delta){
@@ -51,7 +54,7 @@ FinalCI <- function(Info.d,
                                   uk=uk,
                                   reason.interim=reason.interim,
                                   kMax=kMax,
-                                  estimate=estimate,
+                                  statistic=statistic,
                                   delta=delta,
                                   method=method,
                                   bindingFutility=bindingFutility,
@@ -61,10 +64,10 @@ FinalCI <- function(Info.d,
     }
 
     ## ** initialization
-    lowerBound <- c(lbnd = estimate - 4*sqrt(1/Info.d[length(Info.d)]),
-                    ubnd = estimate - 0.5*sqrt(1/Info.d[length(Info.d)]))
-    upperBound <- c(lbnd = estimate + 0.5*sqrt(1/Info.d[length(Info.d)]),
-                    ubnd = estimate + 4*sqrt(1/Info.d[length(Info.d)]))
+    lowerBound <- c(lbnd = estimate - 4*se,
+                    ubnd = estimate - 0.5*se)
+    upperBound <- c(lbnd = estimate + 0.5*se,
+                    ubnd = estimate + 4*se)
     if(conclusion=="efficacy"){
         lowerBound <- pmax(0,lowerBound)
         upperBound <- pmax(0,upperBound)        

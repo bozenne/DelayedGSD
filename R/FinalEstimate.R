@@ -10,6 +10,7 @@
 #' @param reason.interim motivation for stopping or continuing at interim. Use to handle special cases (skipped interim because reach Imax, ...)
 #' @param kMax maximum number of analyses
 #' @param estimate naive estimate (e.g. using  ML or REML).
+#' @param statistic naive test statistic (e.g. using  ML or REML).
 #' @param method  method 1, 2 or 3
 #' @param bindingFutility [logical]  whether the futility stopping rule is binding.
 #' @param cNotBelowFixedc [logical] whether the value c at the decision analysis can be below that of a fixed sample test (H & J page 10)
@@ -28,6 +29,7 @@ FinalEstimate <- function(Info.d,
                           reason.interim,
                           kMax, 
                           estimate,
+                          statistic,
                           method,
                           bindingFutility,
                           cNotBelowFixedc,
@@ -44,7 +46,7 @@ FinalEstimate <- function(Info.d,
                                   uk=uk,
                                   reason.interim=reason.interim,
                                   kMax=kMax,
-                                  estimate=estimate,
+                                  statistic=statistic,
                                   delta=delta,
                                   method=method,
                                   bindingFutility=bindingFutility,
@@ -53,8 +55,9 @@ FinalEstimate <- function(Info.d,
                 )
     }
 
-    lowerBound <- estimate - 2*sqrt(1/Info.d[length(Info.d)])
-    upperBound <- estimate + 2*sqrt(1/Info.d[length(Info.d)])
+    se <- estimate/statistic ## equal to sqrt(1/Info.d[length(Info.d)]) except when decreasing information
+    lowerBound <- estimate - 2*se
+    upperBound <- estimate + 2*se
     res <- try(stats::optimise(function(x){(f(x) - 0.5)^2},
                                lower = lowerBound,
                                upper = upperBound))
