@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar 21 2023 (09:42) 
 ## Version: 
-## Last-Updated: apr 23 2024 (09:08) 
+## Last-Updated: jun  5 2024 (14:25) 
 ##           By: Brice Ozenne
-##     Update #: 139
+##     Update #: 140
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -237,14 +237,13 @@ gridFinalPvalue <- function(object,
     calcP <- function(z, k){
         outP <- do.call(FCT.p_value, list(Info.d = Info.d[1:k],
                                          Info.i = Info.i[1:min(k,kMax-1)],
-                                        #ck = ck[1:min(k,kMax-1)], ck.unrestricted = ck.unrestricted[1:min(k,kMax-1)],
                                          ck = ck[1:min(k,kMax)],
                                          ck.unrestricted = ck.unrestricted[1:min(k,kMax)],
                                          lk = lk[1:min(k,kMax-1)],
                                          uk = uk[1:min(k,kMax-1)],
                                          kMax = kMax,
                                          delta = 0, 
-                                         estimate = z / sqrt(Info.d[k]),
+                                         statistic = z,
                                          reason.interim = reason.interim[1:k],
                                          method = method,
                                          bindingFutility = bindingFutility, 
