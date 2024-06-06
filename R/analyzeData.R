@@ -50,13 +50,24 @@ analyzeData <- function(data, ddf = "nlme", getinfo = TRUE, data.decision = NULL
     if(inherits(m, "try-error")){
         if(is.null(control)){
             ## nlminb optimizer (current default)
-            m <- nlme::gls(X ~ baseline*visit + Z*visit,
-                           data = long,
-                           correlation = nlme::corSymm(form=~visit.num|id), 
-                           weights = nlme::varIdent(form=~1|visit),
-                           method = "REML",
-                           na.action = stats::na.exclude,
-                           control = nlme::glsControl(opt = "optim"))            
+            m <- try(nlme::gls(X ~ baseline*visit + Z*visit,
+                               data = long,
+                               correlation = nlme::corSymm(form=~visit.num|id), 
+                               weights = nlme::varIdent(form=~1|visit),
+                               method = "REML",
+                               na.action = stats::na.exclude,
+                               control = nlme::glsControl(opt = "optim")), silent = TRUE)
+
+            if(inherits(m, "try-error")){
+                m <- nlme::gls(X ~ baseline*visit + Z*visit,
+                               data = long,
+                               correlation = nlme::corSymm(form=~visit.num|id), 
+                               weights = nlme::varIdent(form=~1|visit),
+                               method = "REML",
+                               na.action = stats::na.exclude,
+                               control = nlme::glsControl(opt = "optim", optimMethod = "L-BFGS-B"))
+            }
+                           
         }else{
             stop(m)        
         }
