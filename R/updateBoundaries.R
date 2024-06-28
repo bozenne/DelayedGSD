@@ -57,7 +57,7 @@
 #' plot(myBound1)
 #' 
 #' #### Analyse data at the final ####
-#' theFinalData <- SelectData(theData$d, t = 1e7, Delta.t = theDelay) 
+#' theFinalData <- SelectData(theData$d, t = 1e7) 
 #' 
 #' myLMM <- analyzeData(theFinalData)
 #' myBound2 <- update(myBound1, delta = myLMM)

@@ -56,12 +56,9 @@ myBound2.fixC <- CalcBoundaries(kMax = 2,
                          cNotBelowFixedc = TRUE,
                          bindingFutility= TRUE,
                          delta = 0.6)
-gridFinalPvalue(myBound2.fixC,
-                continuity.correction = 0)
-gridFinalPvalue(myBound2.fixC,
-                continuity.correction = 1)
-gridFinalPvalue(myBound2.fixC,
-                continuity.correction = 2)
+gridFinalPvalue(myBound2.fixC, continuity.correction = 0)
+gridFinalPvalue(myBound2.fixC, continuity.correction = 1)
+gridFinalPvalue(myBound2.fixC, continuity.correction = 2)
 
 ## 3 stages, no fixC
 myBound3 <- CalcBoundaries(kMax = 3,  
@@ -90,12 +87,9 @@ myBound3.fixC <- CalcBoundaries(kMax = 3,
                          cNotBelowFixedc = TRUE,
                          bindingFutility= TRUE,
                          delta = 0.6)
-gridFinalPvalue(myBound3.fixC, digits = 3,
-                continuity.correction = 0)
-gridFinalPvalue(myBound3.fixC, digits = 3,
-                continuity.correction = 1)
-gridFinalPvalue(myBound3.fixC, digits = 3,
-                continuity.correction = 2)
+gridFinalPvalue(myBound3.fixC, continuity.correction = 0)
+gridFinalPvalue(myBound3.fixC, continuity.correction = 1)
+gridFinalPvalue(myBound3.fixC, continuity.correction = 2)
 
 }
 \references{

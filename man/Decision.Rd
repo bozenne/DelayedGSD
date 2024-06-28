@@ -38,7 +38,6 @@ theK <- 2
 theN <- 82
 
 myBound0 <- CalcBoundaries(kMax=theK,
-                     sided=1,
                      alpha=theAlpha,
                      beta=theBeta,
                      InfoR.i=c(0.5,1),
@@ -57,13 +56,15 @@ theAR <- 10  #accrual rate (pt per month)
 theDelay <- 0.7500001  #time in months to process data
 tau.i <- theData$d$t3[theN + ceiling(theAR*theDelay)] #time point at which to do IA
 
-theObsData <- SelectData(theData$d, t = tau.i, Delta.t = theDelay)
+theObsData <- SelectData(theData$d, t = tau.i)
 
 #### Analyse data at interim ####
 myLMM <- analyzeData(theObsData)
-myBound1 <- updateBoundaries(myBound0, lmm = myLMM, k = 1, type.k = "interim")
-myInterim1 <- Decision(myBound1, k = 1, type.k = "interim")
-myInterim1$conclusion
+myBound1 <- update(myBound0, delta = myLMM)
+myBound1$conclusion
+
+Decision(myBound1, k = 1, type.k = "interim")
+
 }
 \author{
 Paul Blanche

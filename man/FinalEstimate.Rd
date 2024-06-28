@@ -14,6 +14,7 @@ FinalEstimate(
   reason.interim,
   kMax,
   estimate,
+  statistic,
   method,
   bindingFutility,
   cNotBelowFixedc,
@@ -39,6 +40,8 @@ ck is possibly with restriction (when cNotBelowFixedc=TRUE) and ck.unrestricted 
 \item{kMax}{maximum number of analyses}
 
 \item{estimate}{naive estimate (e.g. using  ML or REML).}
+
+\item{statistic}{naive test statistic (e.g. using  ML or REML).}
 
 \item{method}{method 1, 2 or 3}
 

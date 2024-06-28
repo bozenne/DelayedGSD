@@ -14,7 +14,7 @@ FinalPvalue(
   reason.interim,
   kMax,
   delta = 0,
-  estimate,
+  statistic,
   method,
   bindingFutility,
   cNotBelowFixedc,
@@ -39,7 +39,7 @@ ck is possibly with restriction (when cNotBelowFixedc=TRUE) and ck.unrestricted 
 
 \item{delta}{true effect under which to calculate the probability (should always be 0 for p-value, only change for calculation of CI)}
 
-\item{estimate}{naive estimate (e.g. using  ML or REML).}
+\item{statistic}{naive test statistic (e.g. using  ML or REML).}
 
 \item{method}{method 1, 2 or 3}
 
@@ -95,7 +95,9 @@ pval2 <- pmvnorm(lower = c(futilityBound[1], statistic), upper = c(efficacyBound
 pval1 + pval2 ## 0.00625 
 
 ## p-value using FinalPvalue
-FinalPvalue(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, lk = futilityBound, uk = efficacyBound, kMax = 3, estimate = estimate)
+FinalPvalue(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, ck.unrestricted = efficacyBound,
+            lk = futilityBound, uk = efficacyBound, reason.interim = c("",""), kMax = 3, statistic = statistic,
+            method = 1, bindingFutility = TRUE, cNotBelowFixedc = FALSE, continuity.correction = 0)
 
 ## p-value using rpact
 
@@ -133,7 +135,9 @@ pval2 <- pmvnorm(lower = c(futilityBound[1], statistic[2]), upper = c(efficacyBo
 pval1 + pval2 ## 0.009819342 
 
 ## p-value using FinalPvalue
-FinalPvalue(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, lk = futilityBound, uk = efficacyBound, kMax = 4, estimate = estimate)
+FinalPvalue(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, ck.unrestricted = efficacyBound,
+            lk = futilityBound, uk = efficacyBound, reason.interim = c("",""), kMax = 4, statistic = tail(statistic,1),
+            method = 1, bindingFutility = TRUE, cNotBelowFixedc = FALSE, continuity.correction = 0)
 
 ## confidence interval using FinalPvalue
 FinalCI(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, lk = futilityBound, uk = efficacyBound, kMax = 4, estimate = estimate) ## [1] 0.07371176 0.72920245
@@ -152,25 +156,28 @@ FinalCI(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, lk = futilityB
 
 ##Example to show that the p-value will be 0.025 if the final test statistic is exactly on the boundary (requires cNotBelowFixedc=F and in case of non-binding futility that the info at decision is same as at interim)
 myBound <- CalcBoundaries(kMax=3,
-                          sided=1,
                           alpha=0.025,  
                           beta=0.2,  
-                          InfoR.i=c(1/3,2/3,1),
+                          InfoR.i=c(1/3,2/3),
                           rho_alpha=2,
                           rho_beta=2,
                           method=1,       #works both for method=1 and method=2
                           cNotBelowFixedc=FALSE,
-                          bindingFutility=FALSE,
+                          bindingFutility=TRUE,
                           delta=1,
-                          InfoR.d=c(1/3,2/3))
+                          InfoR.d=c(1/3,2/3,1))
 
-FinalPvalue(myBound$Info.d,
-            myBound$Info.i,
-            myBound$ck,
-            myBound$lk,
-            myBound$uk,
-            myBound$kMax,
-            estimate = myBound$uk[myBound$kMax]/sqrt(myBound$Info.max),
-            bindingFutility=F,
-            futility2efficacy=T) 
+FinalPvalue2(Info.d = myBound$planned$Info.d,
+            Info.i = myBound$planned$Info.i,
+            ck = myBound$planned$ck,
+            ck.unrestricted = myBound$planned$ck.unrestricted,
+            lk = myBound$planned$lk,
+            uk = myBound$planned$uk,
+            reason.interim = c("no boundary crossed","no boundary crossed",NA), 
+            kMax = myBound$kMax,
+            statistic = tail(myBound$planned$ck,1),
+            method = myBound$method,
+            bindingFutility = TRUE,
+            cNotBelowFixedc = FALSE,
+            continuity.correction = 0) 
 }

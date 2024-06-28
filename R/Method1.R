@@ -60,7 +60,9 @@ Method1 <- function(rho_alpha=2,
     if(!is.null(myseed)){
         if(!is.null(get0(".Random.seed"))){ ## avoid error when .Random.seed do not exists, e.g. fresh R session with no call to RNG
             old <- .Random.seed # to save the current seed
-            on.exit(.Random.seed <<- old) # restore the current seed (before the call to the function)
+            on.exit(try(.Random.seed <<- old, silent = TRUE)) # restore the current seed (before the call to the function)
+        }else{
+            on.exit(rm(.Random.seed, envir=.GlobalEnv))
         }
         set.seed(myseed)
     }

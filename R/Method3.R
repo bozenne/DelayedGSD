@@ -3,9 +3,9 @@
 ## Author: Paul Blanche
 ## Created: Jan  7 2022 (13:47) 
 ## Version: 
-## Last-Updated: mar 21 2023 (10:05) 
+## Last-Updated: jun 28 2024 (14:28) 
 ##           By: Brice Ozenne
-##     Update #: 62
+##     Update #: 79
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -55,8 +55,8 @@
 #'            Kmax=3,
 #'            binding=FALSE,
 #'            Info.max=12,
-#'            InfoR.i=c(3.5,6.75,12)/12,
-#'            InfoR.d=c(5.5,8.75)/12,
+#'            InfoR.i=c(3.5,6.75)/12,
+#'            InfoR.d=c(5.5,8.75,12)/12,
 #'            delta=1,  
 #'            abseps = 1e-06, 
 #'            alternative="greater")
@@ -88,7 +88,9 @@ Method3 <- function(rho_alpha=2,
     if(!is.null(myseed)){
         if(!is.null(get0(".Random.seed"))){ ## avoid error when .Random.seed do not exists, e.g. fresh R session with no call to RNG
             old <- .Random.seed # to save the current seed
-            on.exit(.Random.seed <<- old) # restore the current seed (before the call to the function)
+            on.exit(try(.Random.seed <<- old, silent = TRUE)) # restore the current seed (before the call to the function)
+        }else{
+            on.exit(rm(.Random.seed, envir=.GlobalEnv))
         }
         set.seed(myseed)
     }
@@ -123,7 +125,7 @@ Method3 <- function(rho_alpha=2,
  
     #information sequence relevant for alpha spending and covariance matrix
     InfoR <- c(InfoR.i,InfoR.d[Kmax])
-    
+
     # compute variance-covariance matrix of vector (Z_1,...,Z_k)
     sigmaZk <- diag(1,Kmax)
     for(i in 1:Kmax){
@@ -256,7 +258,7 @@ Method3 <- function(rho_alpha=2,
     Info.i <- InfoR.i*Info.max
     Info.d <- InfoR.d*Info.max
     Info <- InfoR*Info.max
-  
+
     # compute the mean of the multivariate normal distribution under the alternative H1
     thetheta <- delta*sqrt(Info)
     ## }}} 
@@ -435,7 +437,7 @@ Method3 <- function(rho_alpha=2,
     #ck[Kmax] <- NA
     #ck[kMax] <- uk[kMax]
     #lk[kMax] <- uk[kMax] <- NA
-  
+
     ## {{{ create  output
     d <- data.frame(lk=lk,
                     uk=uk,
@@ -466,7 +468,6 @@ Method3 <- function(rho_alpha=2,
                 cMin=cMin)
     ## class(out) <- "delayedGSD" # need to update print function first
     ## }}}
-    .Random.seed <<- old # restore the current seed (before the call to the function)
     out
 }
 

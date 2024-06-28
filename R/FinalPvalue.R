@@ -59,7 +59,9 @@
 #' pval1 + pval2 ## 0.00625 
 #' 
 #' ## p-value using FinalPvalue
-#' FinalPvalue(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, lk = futilityBound, uk = efficacyBound, kMax = 3, estimate = estimate)
+#' FinalPvalue(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, ck.unrestricted = efficacyBound,
+#'             lk = futilityBound, uk = efficacyBound, reason.interim = c("",""), kMax = 3, statistic = statistic,
+#'             method = 1, bindingFutility = TRUE, cNotBelowFixedc = FALSE, continuity.correction = 0)
 #' 
 #' ## p-value using rpact
 #' 
@@ -97,7 +99,9 @@
 #' pval1 + pval2 ## 0.009819342 
 #' 
 #' ## p-value using FinalPvalue
-#' FinalPvalue(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, lk = futilityBound, uk = efficacyBound, kMax = 4, estimate = estimate)
+#' FinalPvalue(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, ck.unrestricted = efficacyBound,
+#'             lk = futilityBound, uk = efficacyBound, reason.interim = c("",""), kMax = 4, statistic = tail(statistic,1),
+#'             method = 1, bindingFutility = TRUE, cNotBelowFixedc = FALSE, continuity.correction = 0)
 #' 
 #' ## confidence interval using FinalPvalue
 #' FinalCI(Info.d = Info.var, Info.i = Info.var, ck = efficacyBound, lk = futilityBound, uk = efficacyBound, kMax = 4, estimate = estimate) ## [1] 0.07371176 0.72920245
@@ -116,27 +120,30 @@
 #' 
 #' ##Example to show that the p-value will be 0.025 if the final test statistic is exactly on the boundary (requires cNotBelowFixedc=F and in case of non-binding futility that the info at decision is same as at interim)
 #' myBound <- CalcBoundaries(kMax=3,
-#'                           sided=1,
 #'                           alpha=0.025,  
 #'                           beta=0.2,  
-#'                           InfoR.i=c(1/3,2/3,1),
+#'                           InfoR.i=c(1/3,2/3),
 #'                           rho_alpha=2,
 #'                           rho_beta=2,
 #'                           method=1,       #works both for method=1 and method=2
 #'                           cNotBelowFixedc=FALSE,
-#'                           bindingFutility=FALSE,
+#'                           bindingFutility=TRUE,
 #'                           delta=1,
-#'                           InfoR.d=c(1/3,2/3))
+#'                           InfoR.d=c(1/3,2/3,1))
 #' 
-#' FinalPvalue(myBound$Info.d,
-#'             myBound$Info.i,
-#'             myBound$ck,
-#'             myBound$lk,
-#'             myBound$uk,
-#'             myBound$kMax,
-#'             estimate = myBound$uk[myBound$kMax]/sqrt(myBound$Info.max),
-#'             bindingFutility=F,
-#'             futility2efficacy=T) 
+#' FinalPvalue2(Info.d = myBound$planned$Info.d,
+#'             Info.i = myBound$planned$Info.i,
+#'             ck = myBound$planned$ck,
+#'             ck.unrestricted = myBound$planned$ck.unrestricted,
+#'             lk = myBound$planned$lk,
+#'             uk = myBound$planned$uk,
+#'             reason.interim = c("no boundary crossed","no boundary crossed",NA), 
+#'             kMax = myBound$kMax,
+#'             statistic = tail(myBound$planned$ck,1),
+#'             method = myBound$method,
+#'             bindingFutility = TRUE,
+#'             cNotBelowFixedc = FALSE,
+#'             continuity.correction = 0) 
 
 ## * FinalPvalue (orignal code)
 #' @export
@@ -160,7 +167,7 @@ FinalPvalue <- function(Info.d,
   
     ## ** reconstruct test statistic
     k <- length(Info.d)
-                                   
+                 
     if(continuity.correction == 3){
         statistic <- statistic - (ck.unrestricted[k] - ck[k])
         statistic_nocor <- statistic
@@ -170,7 +177,7 @@ FinalPvalue <- function(Info.d,
             statistic <- ck.unrestricted[k] ## correaction to ensure consistency between rejection and p-value (we do not reject in this interval)
         }
     }
-                                        #}
+                #}
     ## ** modify information matrix to deal with decreasing information (special case)
     ## For an interim where we do not stop (nor skip): decreasing information between interim and hypothetical decision
     Info.d2 <- Info.d
@@ -270,6 +277,8 @@ FinalPvalue <- function(Info.d,
             }
         }
     }
+
+
     #continuity correction option 2:
     if((statistic >= critval) & (ck[k]>ck.unrestricted[k]) & continuity.correction==2){                
       shift <- max(0,ck[k]-ck.unrestricted[k])
@@ -293,7 +302,7 @@ FinalPvalue <- function(Info.d,
         }else if(k==kMax){
             iIndex <- c(index_interim[iSeq_interimM1], index_final)
         }
-      
+
       if((statistic >= critval) & (ck[k]>ck.unrestricted[k]) & continuity.correction==1){
         ## continuity correction 1 when concluding efficacy at final
         correction <- mvtnorm::pmvnorm(lower = c(iLk,ck.unrestricted[k]),  

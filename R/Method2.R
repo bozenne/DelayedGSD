@@ -41,7 +41,7 @@
 #'                     InfoR.d=0.65,
 #'                     bindingFutility=TRUE)
 #'
-#' b12 <- Method2(Kmax=2,Info.max=b1$Info.max,delta=1.5,alpha=0.025,InfoR.i=c(0.6,1),InfoR.d=0.65)
+#' b12 <- Method2(Kmax=2,Info.max=b1$Info.max,delta=1.5,alpha=0.025,InfoR.i=c(0.6),InfoR.d=c(0.65,1))
 #' 
 #' 
 #' b1FT <- CalcBoundaries(kMax=2,  #max number of analyses (including final)
@@ -55,20 +55,18 @@
 #'                     InfoR.d=0.65,
 #'                     bindingFutility=TRUE)
 #'
-#' b12FT <- Method2(Kmax=2,Info.max=b1FT$Info.max,delta=1.5,binding=TRUE,alpha=0.025,InfoR.i=c(0.6,1),InfoR.d=0.65)
+#' b12FT <- Method2(Kmax=2,Info.max=b1FT$Info.max,delta=1.5,binding=TRUE,alpha=0.025,InfoR.i=0.6,InfoR.d=c(0.65,1))
 #' 
-#' b12FTNoImax <- Method2(Kmax=2,Info.max=NULL,delta=1.5,binding=TRUE,alpha=0.025,InfoR.i=c(0.6,1),InfoR.d=0.65)
+#' b12FTNoImax <- Method2(Kmax=2,Info.max=NULL,delta=1.5,binding=TRUE,alpha=0.025,InfoR.i=0.6,InfoR.d=c(0.65,1))
 #' 
 #' 
 #' 
 #' all.equal(b1$uk, b12$boundaries[,"b.k"])
 #' all.equal(b1$lk, b12$boundaries[,"a.k"])
 #' 
-#' b13 <- Method2(Kmax=2,delta=1.5,alpha=0.025,Trace=T,InfoR.i=c(0.6,1))
+#' b14nb <- Method2(Kmax=2,delta=1.5,alpha=0.025,Trace=T,InfoR.i=0.6,InfoR.d=c(0.65,1),binding=F)
 #' 
-#' b14nb <- Method2(Kmax=2,delta=1.5,alpha=0.025,Trace=T,InfoR.i=c(0.6,1),InfoR.d=0.65,binding=F)
-#' 
-#' b14b <- Method2(Kmax=2,delta=1.5,alpha=0.025,Trace=T,InfoR.i=c(0.6,1),InfoR.d=0.65,binding=T)
+#' b14b <- Method2(Kmax=2,delta=1.5,alpha=0.025,Trace=T,InfoR.i=0.6,InfoR.d=c(0.65,1),binding=T)
 
 
 
@@ -102,7 +100,9 @@ Method2 <- function(rho_alpha=2,
     if(!is.null(myseed)){
         if(!is.null(get0(".Random.seed"))){ ## avoid error when .Random.seed do not exists, e.g. fresh R session with no call to RNG
             old <- .Random.seed # to save the current seed
-            on.exit(.Random.seed <<- old) # restore the current seed (before the call to the function)
+            on.exit(try(.Random.seed <<- old, silent = TRUE)) # restore the current seed (before the call to the function)
+        }else{
+            on.exit(rm(.Random.seed, envir=.GlobalEnv))
         }
         set.seed(myseed)
     }

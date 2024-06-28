@@ -73,10 +73,30 @@ Can also be \code{"only"} to only display planned boundaries.}
 Display boundaries over information
 }
 \examples{
-bnds <- CalcBoundaries(kMax=3, InfoR.i = c(0.5,0.75,1), InfoR.d = c(0.55,0.8))
-plot(bnds, type = "Z")
-plot(bnds, type = "Z", add.arrow = TRUE)
-plot(bnds, type = "Z", add.arrow = TRUE, lwd.arrow=2,ylim=c(0.35,2.6), xlim=c(0.5,1.1),legend=FALSE)
-plot(bnds, type = "E")
-plot(bnds, type = "P")
+#### planning stage ####
+bnds3 <- CalcBoundaries(kMax=3, InfoR.i = c(0.5,0.75,1), InfoR.d = c(0.55,0.8))
+plot(bnds3, type = "Z")
+plot(bnds3, type = "Z", add.arrow = TRUE)
+plot(bnds3, type = "Z", add.arrow = TRUE, lwd.arrow=2,ylim=c(0.35,2.6), xlim=c(0.5,1.1),legend=FALSE)
+plot(bnds3, type = "E")
+plot(bnds3, type = "P")
+
+GSD.bound <- CalcBoundaries(kMax=2,  ## max number of analyses (including final)
+                              alpha=alpha,  ## type I error
+                              beta=beta,  ## type II error
+                              InfoR.i=c(round(I_i,2),1),  ## planned or observed information rates
+                              rho_alpha=2,  ## rho parameter for alpha error spending function
+                              rho_beta=2,  ## rho parameter for beta error spending function
+                              method=3,  ## use method 1 or 2 from paper H&J
+                              delta=theta0,  ## effect that the study is powered for
+                              InfoR.d=c(round(I_d,2),1),
+                              cNotBelowFixedc=TRUE)
+
+#### analysis stage ####
+data(simLP3trial, package = "DelayedGSD")
+resI <- analyzeData(SelectData(simLP3trial,453.6779))
+GSD.analysis <- update(GSD.bound,delta=resI)
+plot(GSD.analysis, type = "Z")
+plot(GSD.analysis, type = "E")
+plot(GSD.analysis, type = "P")
 }

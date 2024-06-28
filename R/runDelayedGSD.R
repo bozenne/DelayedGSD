@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (13:23) 
 ## Version: 
-## Last-Updated: maj  2 2024 (15:49) 
+## Last-Updated: jun 28 2024 (15:19) 
 ##           By: Brice Ozenne
-##     Update #: 89
+##     Update #: 90
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -33,8 +33,8 @@
 ##'                           rho_alpha = 2, rho_beta = 2,
 ##'                           method = 1, cNotBelowFixedc = FALSE, bindingFutility = TRUE, delta = 1)
 ##' set.seed(19)
-##' df.GSD <- GenData()$d
-##' runDelayedGSD(df.GSD, boundaries = e.bound, PropForInterim = c(0.5), lag = 0, overrule.futility = FALSE)
+##' df.GSD <- nGenData()$d
+##' runDelayedGSD(df.GSD, boundaries = e.bound, N.fw = 2, PropForInterim = c(0.5), lag = 0, overrule.futility = FALSE)
 ##' 
 
 ## * runDelayedGSD (code)

@@ -95,6 +95,6 @@ theFinalData <- SelectData(theData$d, t = 1e7)
 myLmmF <- analyzeData(theFinalData)
 myFinal <- update(myInterim1, delta = myLmmF) ## k = 2, analysis = "final"
 myFinal
-print(myFinal, abreviated = FALSE)
+print(myFinal)
 plot(myFinal)
 }

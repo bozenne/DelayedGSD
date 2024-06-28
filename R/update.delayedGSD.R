@@ -65,7 +65,7 @@
 #' myLmmF <- analyzeData(theFinalData)
 #' myFinal <- update(myInterim1, delta = myLmmF) ## k = 2, analysis = "final"
 #' myFinal
-#' print(myFinal, abreviated = FALSE)
+#' print(myFinal)
 #' plot(myFinal)
 
 ## * update.delayedGSD (code)
