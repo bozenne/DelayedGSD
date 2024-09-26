@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (13:23) 
 ## Version: 
-## Last-Updated: jun 28 2024 (15:19) 
+## Last-Updated: sep 25 2024 (14:29) 
 ##           By: Brice Ozenne
-##     Update #: 90
+##     Update #: 96
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -24,6 +24,7 @@
 ##' @param PropForInterim [numeric vector of length Kmax-1] percentage of all subjects, once they had the change to have complete follow-up, triggering interim and final analyses.
 ##' By default equal to \code{InfoR.i}.
 ##' @param lag [numeric] time lag between stop of recruitment and decision to stop recruitment.
+##' @param export.GSD [logical] should a list of \code{delayedGSD} objects used to calculate boundaries and estimates be output as an attribute.
 ##' @param ... not used
 ##' 
 ##' @noRd
@@ -41,7 +42,8 @@
 ##' @export
 runDelayedGSD <- function(data, boundaries, N.fw,
                           PropForInterim, lag,
-                          overrule.futility){
+                          overrule.futility,
+                          export.GSD = FALSE){
 
     ## ** check user input
     ## *** boundaries
@@ -249,6 +251,9 @@ runDelayedGSD <- function(data, boundaries, N.fw,
     rownames(out) <- NULL
 
     ## ## ** export
+    if(export.GSD){
+        attr(out, "delayedGSD") <- c(gsd.interim[1:iK],list(gsd.decision))
+    }
     return(out)
 
 }

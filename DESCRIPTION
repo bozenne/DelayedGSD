@@ -1,8 +1,8 @@
 Package: DelayedGSD
 Type: Package
 Title: Planning and analysis of group sequential trial with pipeline data
-Version: 0.1.0
-Date: 2024-06-28
+Version: 0.1.1
+Date: 2024-09-26
 Authors@R: c(
     person("Corine", "Baayen", role = "aut"),
     person("Paul", "Blanche", role = "aut"),

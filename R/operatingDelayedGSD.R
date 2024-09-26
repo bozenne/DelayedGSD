@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr 29 2024 (09:41) 
 ## Version: 
-## Last-Updated: jun 28 2024 (15:22) 
+## Last-Updated: sep 25 2024 (14:38) 
 ##           By: Brice Ozenne
-##     Update #: 236
+##     Update #: 253
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -297,6 +297,7 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
 
     ## ** Loop
     RES <- NULL # initialize results to save
+    export.GSD <- (cpus==1)&(n.sim==1)&(n.method==1)&!is.null(seed)
 
     if (cpus == 1) {
         for(iSim in 1:n.sim){ ## iSim <- 1
@@ -335,11 +336,22 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
                              )$d
 
             iLs.res <- lapply(1:n.method, function(iM){  ## iM <- 1
-                iOut <- try(runDelayedGSD(iData, boundaries = e.bound[[iM]], N.fw = N.fw, PropForInterim = PropForInterim, lag = lag, overrule.futility = method$overrule.futility[iM]))
+                iOut <- try(runDelayedGSD(iData,
+                                          boundaries = e.bound[[iM]],
+                                          N.fw = N.fw,
+                                          PropForInterim = PropForInterim,
+                                          lag = lag,
+                                          overrule.futility = method$overrule.futility[iM],
+                                          export.GSD = export.GSD))
+
                 if(inherits(iOut,"try-error")){
                     return(NULL)
                 }else if(!is.null(iSeed)){
-                    return(cbind(iOut, seed = iSeed))
+                    iOut2 <- cbind(iOut, seed = iSeed)
+                    if(export.GSD){
+                        attr(iOut2,"delayedGSD") <- attr(iOut,"delayedGSD")
+                    }
+                    return(iOut2)
                 }else{
                     return(iOut)
                 }
@@ -400,7 +412,13 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
                                                      )$d
 
                                     iLs.res <- lapply(1:n.method, function(iM){  ## iM <- 1
-                                        iOut <- try(runDelayedGSD(iData, boundaries = e.bound[[iM]], N.fw = N.fw, PropForInterim = PropForInterim, lag = lag, overrule.futility = method$overrule.futility[iM]))
+                                        iOut <- try(runDelayedGSD(iData,
+                                                                  boundaries = e.bound[[iM]],
+                                                                  N.fw = N.fw,
+                                                                  PropForInterim = PropForInterim,
+                                                                  lag = lag,
+                                                                  overrule.futility = method$overrule.futility[iM],
+                                                                  export.GSD = FALSE))
                                         if(inherits(iOut,"try-error")){
                                             return(NULL)
                                         }else{
@@ -422,6 +440,10 @@ operatingDelayedGSD <- function(n.obs = NULL, n.sim,
                 args = c(list(n.obs = n.obs, n.sim = n.sim, kMax = kMax, method=method), args.GenData), 
                 boundaries = e.bound,
                 results = RES)
+    if(export.GSD){
+        out$delayedGSD <- attr(RES,"delayedGSD")
+        attr(RES,"delayedGSD") <- NULL
+    }
     class(out) <- append("operatingDelayedGSD",class(RES))
     return(out)
 }   

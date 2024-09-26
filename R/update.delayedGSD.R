@@ -124,8 +124,6 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
         }
     }
     
-    #browser()
-
     ## ** update object with information and estimate
     ## skipped
     if(type.update=="information"){
