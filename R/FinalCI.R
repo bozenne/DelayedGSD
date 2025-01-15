@@ -78,6 +78,7 @@ FinalCI <- function(Info.d,
 
     f_lowerBound <- c(f(lowerBound[1]),f(lowerBound[2]))
     f_upperBound <- c(f(upperBound[1]),f(upperBound[2]))
+    
 
     ## ** lower bound of the CI
     ## if(sign(f_lowerBound[1] - alpha/2) != sign(f_upperBound[1] - alpha/2)) ## not good enougth: f(x) is a bit stochastic and can lead to error due to same sign on bounds
@@ -95,7 +96,7 @@ FinalCI <- function(Info.d,
         ## use "Brent" or optimize() directly
         ## optimize requires lower,upper values which we are unable to provide here
         lbnd$iter <- unname(lbnd$counts["function"])
-        lbnd$root <- lbnd$par
+        lbnd$root <- unname(lbnd$par)
         lbnd$f.root <- lbnd$value
     }
 
@@ -103,7 +104,7 @@ FinalCI <- function(Info.d,
         lbnd$root <- NA
     }
 
-    ## ** lower bound of the CI
+    ## ** upper bound of the CI
     ## if(sign(1 - f_lowerBound[2] - alpha/2)!=sign(1 - f_upperBound[2] - alpha/2)) ## not good enougth: f(x) is a bit stochastic and can lead to error due to same sign on bounds
     ubnd <- try(stats::uniroot(function(x){(1 - f(x) - alpha/2)},
                            lower = lowerBound[2],
@@ -120,7 +121,7 @@ FinalCI <- function(Info.d,
         ## use "Brent" or optimize() directly
         ## optimize requires lower,upper values which we are unable to provide here
         ubnd$iter <- unname(ubnd$counts["function"])
-        ubnd$root <- ubnd$par
+        ubnd$root <- unname(ubnd$par)
         ubnd$f.root <- ubnd$value
     }
 

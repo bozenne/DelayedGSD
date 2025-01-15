@@ -280,7 +280,8 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
         }
 
         ## *** CI
-        if(ci & as.double(resP) < 1){
+        if(ci){
+        ## if(ci & as.double(resP) < 1){
             resCI <- do.call(FinalCI, c(ls.args, list(FCT.p_value = FCT.p_value,
                                                       estimate = delta[1,"estimate"], conf.level = object$conf.level, tolerance = tolerance, conclusion = object$conclusion["decision",k])))
             delta.MUE[1,"lower"] <- resCI["lower"]
@@ -292,10 +293,10 @@ update.delayedGSD <- function(object, delta, Info.i, Info.d,
                 attr(delta.MUE,"error") <- c(attr(delta.MUE,"error"), lower = unname(attr(resCI,"error")["lower"]), upper = unname(attr(resCI,"error")["upper"]))
             }
         }
-        
+
         ## *** Estimate
         if(estimate){
-            resMUE <- do.call(FinalEstimate, c(ls.args, list(FCT.p_value = FCT.p_value, estimate = delta[1,"estimate"], tolerance = tolerance)))
+            resMUE <- do.call(FinalEstimate, c(ls.args, list(FCT.p_value = FCT.p_value, estimate = delta[1,"estimate"], lower = delta.MUE[1,"lower"], upper = delta.MUE[1,"upper"], tolerance = tolerance)))
 
             delta.MUE[1,"estimate"] <- resMUE
             if(is.null(attr(delta.MUE,"error"))){

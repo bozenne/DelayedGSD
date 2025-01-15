@@ -10,6 +10,7 @@
 #' @param reason.interim motivation for stopping or continuing at interim. Use to handle special cases (skipped interim because reach Imax, ...)
 #' @param kMax maximum number of analyses
 #' @param estimate naive estimate (e.g. using  ML or REML).
+#' @param lower,upper lower and upper bounds for the MUE used to perform the root finding.
 #' @param statistic naive test statistic (e.g. using  ML or REML).
 #' @param method  method 1, 2 or 3
 #' @param bindingFutility [logical]  whether the futility stopping rule is binding.
@@ -28,7 +29,7 @@ FinalEstimate <- function(Info.d,
                           uk,
                           reason.interim,
                           kMax, 
-                          estimate,
+                          estimate, lower, upper,
                           statistic,
                           method,
                           bindingFutility,
@@ -56,17 +57,36 @@ FinalEstimate <- function(Info.d,
     }
 
     se <- estimate/statistic ## equal to sqrt(1/Info.d[length(Info.d)]) except when decreasing information
-    lowerBound <- estimate - 2*se
-    upperBound <- estimate + 2*se
-    res <- try(stats::optimise(function(x){(f(x) - 0.5)^2},
-                               lower = lowerBound,
-                               upper = upperBound))
-    if(inherits(res,"try-error")){
-        res <- list(minimum = NA,
-                    objective = NA)
-    }else if(is.na(res$objective) || abs(res$objective)>tolerance){
-        res$minimum <- NA
+
+    if(!is.na(lower) & !is.na(upper)){
+        lowerBound <- lower
+        upperBound <- upper
+    }else{
+        lowerBound <- estimate - 4*se
+        upperBound <- estimate + 4*se
     }
-    attr(res$minimum,"error") <- res$objective
-    return(res$minimum)
+
+    res <- try(stats::uniroot(function(x){f(x) - 0.5},
+                              lower = lowerBound[1],
+                              upper = upperBound[1],
+                              tol = 1e-10),
+               silent = TRUE)
+    if(inherits(res,"try-error")){
+        res <- suppcsressWarnings(stats::optim(fn = function(x){(f(x) - 0.5)^2},
+                                             par = (lowerBound[1] + upperBound[1])/2,
+                                             method = "Nelder-Mead"))
+        res$iter <- unname(res$counts["function"])
+        res$root <- unname(res$par)
+        res$f.root <- res$value
+    }
+
+    if(abs(res$f.root)>tolerance){
+        res$root <- NA
+    }
+
+    ## ** export
+    out <- res$root
+    attr(out,"error") <- res$f.root
+    attr(out,"iter") <- res$iter
+    return(out)
 }
