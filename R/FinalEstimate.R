@@ -72,7 +72,7 @@ FinalEstimate <- function(Info.d,
                               tol = 1e-10),
                silent = TRUE)
     if(inherits(res,"try-error")){
-        res <- suppcsressWarnings(stats::optim(fn = function(x){(f(x) - 0.5)^2},
+        res <- suppressWarnings(stats::optim(fn = function(x){(f(x) - 0.5)^2},
                                              par = (lowerBound[1] + upperBound[1])/2,
                                              method = "Nelder-Mead"))
         res$iter <- unname(res$counts["function"])
