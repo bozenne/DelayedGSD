@@ -69,6 +69,7 @@ FinalEstimate <- function(Info.d,
     res <- try(stats::uniroot(function(x){f(x) - 0.5},
                               lower = lowerBound[1],
                               upper = upperBound[1],
+                              extendInt = "yes",
                               tol = 1e-10),
                silent = TRUE)
     if(inherits(res,"try-error")){

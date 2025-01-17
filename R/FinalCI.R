@@ -85,11 +85,13 @@ FinalCI <- function(Info.d,
     lbnd <- try(stats::uniroot(function(x){(f(x) - alpha/2)},
                                lower = lowerBound[1],
                                upper = upperBound[1],
+                               extendInt = "upX",
                                tol = 1e-10), silent = TRUE)
     if(inherits(lbnd,"try-error")){
         lbnd <- suppressWarnings(stats::optim(fn = function(x){(f(x) - alpha/2)^2},
                                               par = (lowerBound[1] + upperBound[1])/2,
-                                              method = "Nelder-Mead"))
+                                              upper = upperBound[1],                               
+                                              method = "L-BFGS-B"))
         ## Advarselsbesked:
         ## I stats::optim(fn = function(x) { :
         ##   one-dimensional optimization by Nelder-Mead is unreliable:
@@ -109,12 +111,14 @@ FinalCI <- function(Info.d,
     ubnd <- try(stats::uniroot(function(x){(1 - f(x) - alpha/2)},
                            lower = lowerBound[2],
                            upper = upperBound[2],
+                           extendInt = "downX",
                            tol = 1e-10), silent = TRUE)
 
     if(inherits(ubnd,"try-error")){
         ubnd <- suppressWarnings(stats::optim(fn = function(x){(1 - f(x) - alpha/2)^2},
                                               par = (lowerBound[2] + upperBound[2])/2,
-                                              method = "Nelder-Mead"))
+                                              lower = lowerBound[2],
+                                              method = "L-BFGS-B"))
         ## Advarselsbesked:
         ## I stats::optim(fn = function(x) { :
         ##   one-dimensional optimization by Nelder-Mead is unreliable:
