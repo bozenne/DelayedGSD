@@ -74,8 +74,9 @@ FinalEstimate <- function(Info.d,
                silent = TRUE)
 
     if(inherits(res,"try-error") || abs(res$f.root)>tolerance){
+
         if(inherits(res,"try-error")){
-            starter <- (lowerBound[2] + upperBound[2])/2
+            starter <- (lowerBound[1] + upperBound[1])/2
         }else{
             starter <- res$root
         }
