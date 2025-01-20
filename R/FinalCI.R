@@ -68,20 +68,8 @@ FinalCI <- function(Info.d,
                     ubnd = estimate - 0.5*se)
     upperBound <- c(lbnd = estimate + 0.5*se,
                     ubnd = estimate + 4*se)
-    if(conclusion=="efficacy"){
-        lowerBound <- pmax(0,lowerBound)
-        upperBound <- pmax(0,upperBound)        
-    }else if(conclusion=="futility"){
-        lowerBound <- pmin(0,lowerBound)
-        upperBound <- pmin(0,upperBound)        
-    }
-
-    f_lowerBound <- c(f(lowerBound[1]),f(lowerBound[2]))
-    f_upperBound <- c(f(upperBound[1]),f(upperBound[2]))
-    
 
     ## ** lower bound of the CI
-    ## if(sign(f_lowerBound[1] - alpha/2) != sign(f_upperBound[1] - alpha/2)) ## not good enougth: f(x) is a bit stochastic and can lead to error due to same sign on bounds
     lbnd <- try(stats::uniroot(function(x){(f(x) - alpha/2)},
                                lower = lowerBound[1],
                                upper = upperBound[1],
@@ -110,7 +98,6 @@ FinalCI <- function(Info.d,
     }
 
     ## ** upper bound of the CI
-    ## if(sign(1 - f_lowerBound[2] - alpha/2)!=sign(1 - f_upperBound[2] - alpha/2)) ## not good enougth: f(x) is a bit stochastic and can lead to error due to same sign on bounds
     ubnd <- try(stats::uniroot(function(x){(1 - f(x) - alpha/2)},
                                lower = lowerBound[2],
                                upper = upperBound[2],
