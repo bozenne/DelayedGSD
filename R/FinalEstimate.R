@@ -73,9 +73,10 @@ FinalEstimate <- function(Info.d,
                               tol = 1e-10),
                silent = TRUE)
 
-    if(!inherits(res,"try-error")){
-        ## uniroot seems to only approximate the residual error. This provides the actual value.
-        res$f.root <- f(res$root) - 0.5
+    if(!inherits(res,"try-error") && !is.null(attr(res$f.root,"error")) && max(attr(res$f.root,"error"))>(tolerance/10)){
+        ## f is stochastic due to numerical approximations so by chance is may be above tolerance
+        ## replicating the evaluation should provide a more stable value
+        res$f.root <- mean(abs(replicate(f(res$root) - 0.5, n=10)))
     }
 
     if(inherits(res,"try-error") || abs(res$f.root)>tolerance){
@@ -90,7 +91,7 @@ FinalEstimate <- function(Info.d,
                                              method = "Nelder-Mead"))
         res$iter <- unname(res$counts["function"])
         res$root <- unname(res$par)
-        res$f.root <- try(f(res$root) - 0.5, silent = TRUE)
+        res$f.root <- mean(abs(replicate(f(res$root) - 0.5, n=10)))
     }
 
     if(inherits(res$f.root,"try-error") || abs(res$f.root)>tolerance){

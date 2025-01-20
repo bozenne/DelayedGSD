@@ -76,9 +76,10 @@ FinalCI <- function(Info.d,
                                extendInt = "upX",
                                tol = 1e-10), silent = TRUE)
     
-    if(!inherits(lbnd,"try-error")){
-        ## uniroot seems to only approximate the residual error. This provides the actual value.
-        lbnd$f.root <- f(lbnd$root) - alpha/2
+    if(!inherits(lbnd,"try-error") && !is.null(attr(lbnd$f.root,"error")) && max(attr(lbnd$f.root,"error"))>(tolerance/10)){
+        ## f is stochastic due to numerical approximations so by chance is may be above tolerance
+        ## replicating the evaluation should provide a more stable value
+        lbnd$f.root <- mean(abs(replicate(f(lbnd$root) - alpha/2, n = 10)))
     }
 
     if(inherits(lbnd,"try-error") || abs(lbnd$f.root)>tolerance){
@@ -95,7 +96,7 @@ FinalCI <- function(Info.d,
                                               method = "L-BFGS-B"))
         lbnd$iter <- unname(lbnd$counts["function"])
         lbnd$root <- unname(lbnd$par)
-        lbnd$f.root <- f(lbnd$root) - alpha/2
+        lbnd$f.root <- mean(abs(replicate(f(lbnd$root) - alpha/2, n = 10)))
     }
 
     if(inherits(lbnd$f.root,"try-error") || abs(lbnd$f.root)>tolerance){
@@ -108,10 +109,11 @@ FinalCI <- function(Info.d,
                                upper = upperBound[2],
                                extendInt = "downX",
                                tol = 1e-10), silent = TRUE)
-    
-    if(!inherits(ubnd,"try-error")){
-        ## uniroot seems to only approximate the residual error. This provides the actual value.
-        ubnd$f.root <- 1 - f(ubnd$root) - alpha/2
+
+    if(!inherits(ubnd,"try-error") && !is.null(attr(ubnd$f.root,"error")) && max(attr(ubnd$f.root,"error"))>(tolerance/10)){
+        ## f is stochastic due to numerical approximations so by chance is may be above tolerance
+        ## replicating the evaluation should provide a more stable value
+        ubnd$f.root <- mean(abs(replicate(1 - f(ubnd$root) - alpha/2, n=10)))
     }
 
     if(inherits(ubnd,"try-error") || abs(ubnd$f.root)>tolerance){ 
@@ -128,7 +130,7 @@ FinalCI <- function(Info.d,
         ## 1e3*(1 - f(ubnd$par) - alpha/2)^2
         ubnd$iter <- unname(ubnd$counts["function"])
         ubnd$root <- unname(ubnd$par)
-        ubnd$f.root <- 1 - f(ubnd$root) - alpha/2
+        ubnd$f.root <- mean(abs(replicate(1 - f(ubnd$root) - alpha/2, n=10)))
     }
 
 
