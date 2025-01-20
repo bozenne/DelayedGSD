@@ -73,6 +73,11 @@ FinalEstimate <- function(Info.d,
                               tol = 1e-10),
                silent = TRUE)
 
+    if(!inherits(res,"try-error")){
+        ## uniroot seems to only approximate the residual error. This provides the actual value.
+        res$f.root <- f(res$root) - 0.5
+    }
+
     if(inherits(res,"try-error") || abs(res$f.root)>tolerance){
 
         if(inherits(res,"try-error")){
