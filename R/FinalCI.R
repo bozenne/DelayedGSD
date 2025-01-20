@@ -87,49 +87,55 @@ FinalCI <- function(Info.d,
                                upper = upperBound[1],
                                extendInt = "upX",
                                tol = 1e-10), silent = TRUE)
-    if(inherits(lbnd,"try-error")){
-        lbnd <- suppressWarnings(stats::optim(fn = function(x){(f(x) - alpha/2)^2},
-                                              par = (lowerBound[1] + upperBound[1])/2,
+
+    if(inherits(lbnd,"try-error") || abs(lbnd$f.root)>tolerance){
+        
+        if(inherits(lbnd,"try-error")){
+            starter <- (lowerBound[2] + upperBound[2])/2
+        }else{
+            starter <- lbnd$root
+        }
+        ## artificially increase the objective function otherwise optim just set the solution to 0 or 1 as alpha/2 is quite small
+        lbnd <- suppressWarnings(stats::optim(fn = function(x){1e3*(f(x) - alpha/2)^2},
+                                              par = starter,
                                               upper = upperBound[1],                               
                                               method = "L-BFGS-B"))
-        ## Advarselsbesked:
-        ## I stats::optim(fn = function(x) { :
-        ##   one-dimensional optimization by Nelder-Mead is unreliable:
-        ## use "Brent" or optimize() directly
-        ## optimize requires lower,upper values which we are unable to provide here
         lbnd$iter <- unname(lbnd$counts["function"])
         lbnd$root <- unname(lbnd$par)
-        lbnd$f.root <- lbnd$value
+        lbnd$f.root <- try(1 - f(lbnd$root) - alpha/2, silent = TRUE)
     }
 
-    if(abs(lbnd$f.root)>tolerance){
+    if(inherits(lbnd$f.root,"try-error") || abs(lbnd$f.root)>tolerance){
         lbnd$root <- NA
     }
 
     ## ** upper bound of the CI
     ## if(sign(1 - f_lowerBound[2] - alpha/2)!=sign(1 - f_upperBound[2] - alpha/2)) ## not good enougth: f(x) is a bit stochastic and can lead to error due to same sign on bounds
     ubnd <- try(stats::uniroot(function(x){(1 - f(x) - alpha/2)},
-                           lower = lowerBound[2],
-                           upper = upperBound[2],
-                           extendInt = "downX",
-                           tol = 1e-10), silent = TRUE)
+                               lower = lowerBound[2],
+                               upper = upperBound[2],
+                               extendInt = "downX",
+                               tol = 1e-10), silent = TRUE)
 
-    if(inherits(ubnd,"try-error")){
-        ubnd <- suppressWarnings(stats::optim(fn = function(x){(1 - f(x) - alpha/2)^2},
-                                              par = (lowerBound[2] + upperBound[2])/2,
+    if(inherits(ubnd,"try-error") || abs(ubnd$f.root)>tolerance){ 
+
+        if(inherits(ubnd,"try-error")){
+            starter <- (lowerBound[2] + upperBound[2])/2
+        }else{
+            starter <- ubnd$root
+        }
+        ## artificially increase the objective function otherwise optim just set the solution to 0 or 1 as alpha/2 is quite small
+        ubnd <- suppressWarnings(stats::optim(fn = function(x){1e3*(1 - f(x) - alpha/2)^2},
+                                              par = starter,
                                               lower = lowerBound[2],
                                               method = "L-BFGS-B"))
-        ## Advarselsbesked:
-        ## I stats::optim(fn = function(x) { :
-        ##   one-dimensional optimization by Nelder-Mead is unreliable:
-        ## use "Brent" or optimize() directly
-        ## optimize requires lower,upper values which we are unable to provide here
         ubnd$iter <- unname(ubnd$counts["function"])
         ubnd$root <- unname(ubnd$par)
-        ubnd$f.root <- ubnd$value
+        ubnd$f.root <- try(1 - f(ubnd$root) - alpha/2, silent = TRUE)
     }
 
-    if(abs(ubnd$f.root)>tolerance){
+
+    if(inherits(ubnd$f.root,"try-error") || abs(ubnd$f.root)>tolerance){
         ubnd$root <- NA
     }
 

@@ -14,6 +14,8 @@ FinalEstimate(
   reason.interim,
   kMax,
   estimate,
+  lower,
+  upper,
   statistic,
   method,
   bindingFutility,
@@ -40,6 +42,8 @@ ck is possibly with restriction (when cNotBelowFixedc=TRUE) and ck.unrestricted 
 \item{kMax}{maximum number of analyses}
 
 \item{estimate}{naive estimate (e.g. using  ML or REML).}
+
+\item{lower, upper}{lower and upper bounds for the MUE used to perform the root finding.}
 
 \item{statistic}{naive test statistic (e.g. using  ML or REML).}
 

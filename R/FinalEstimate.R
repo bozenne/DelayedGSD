@@ -72,16 +72,22 @@ FinalEstimate <- function(Info.d,
                               extendInt = "yes",
                               tol = 1e-10),
                silent = TRUE)
-    if(inherits(res,"try-error")){
+
+    if(inherits(res,"try-error") || abs(res$f.root)>tolerance){
+        if(inherits(res,"try-error")){
+            starter <- (lowerBound[2] + upperBound[2])/2
+        }else{
+            starter <- res$root
+        }
         res <- suppressWarnings(stats::optim(fn = function(x){(f(x) - 0.5)^2},
-                                             par = (lowerBound[1] + upperBound[1])/2,
+                                             par = starter,
                                              method = "Nelder-Mead"))
         res$iter <- unname(res$counts["function"])
         res$root <- unname(res$par)
-        res$f.root <- res$value
+        res$f.root <- try(f(res$root) - 0.5, silent = TRUE)
     }
 
-    if(abs(res$f.root)>tolerance){
+    if(inherits(res$f.root,"try-error") || abs(res$f.root)>tolerance){
         res$root <- NA
     }
 
