@@ -546,12 +546,10 @@ FinalPvalue2 <- function(Info.d,
                                        sigma = Info.matrix[iIndex,iIndex,drop=FALSE])
 
                     ## 2- probability to stop for futility and have a more extreme test statistic
-                    ## NOTE: concluding for efficacy with method 3 is more extreme than stopping for futility (since that will lead to concluding futility).
-                    ##       this case is therefore excluded
-                    
-                    if(!(method == 3 & statistic > ck[stage] & reason.interim[stage]!="futility")){
-                        ## NOTE: notice the negation ("!") before the condition, i.e. either method 1 or 2
-                        ##                                                                or method 3 where we conclude efficacy
+                    ## With method 3, stopping recruitement for futility implies concluding futility and can thus only be more extreme when concluding futility
+                    ## When having a non-binding rule and having the option to stop for futility or continuing, continuing garantee a more extreme results
+                    ## (worse case: futility but since it occurs later it is more extreme) so one would never stop for futility to get a more extreme result.
+                    if(method %in% 1:2 || (bindingFutility && (statistic < ck[stage] || reason.interim[stage] == "futility"))){
                         iTerm2 <- pmvnorm2(lower = c(lk.continue[iSeq_interimM1], -Inf,       Fstatistic),   
                                            upper = c(uk[iSeq_interimM1],          lk[iStage], Inf),
                                            mean = delta * sqrt(Info.vec[iIndex]),
@@ -594,6 +592,8 @@ FinalPvalue2 <- function(Info.d,
 }
 
 ## * FinalPvalue3 (code streamlined by Brice trying to better handle the non-binding case)
+## experiment: does not handles all cases (only 2 interim, no contstrains, no method 3)
+## instead of counting path twice with non-binding futility, it consider the most likely in each part of the sample space 
 FinalPvalue3 <- function(Info.d,  
                          Info.i,  
                          ck,
