@@ -164,6 +164,9 @@ FinalPvalue <- function(Info.d,
     
   
     requireNamespace("mvtnorm")
+    # Method 3 already uses 1e-6 for planning.
+    # For other methods, retain mvtnorm::GenzBretz()'s default of 1e-3.
+    abseps <- if (method == 3) 1e-6 else 1e-3
   
     ## ** reconstruct test statistic
     k <- length(Info.d)
@@ -264,14 +267,14 @@ FinalPvalue <- function(Info.d,
                 pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,uk[iStage],ck.unrestricted[iStage]),  
                                                 upper = c(iUk,Inf,Inf),
                                                 mean = theta[iIndex],
-                                                sigma= iSigma)
+                                                sigma= iSigma, abseps = abseps)
                 
                 if(method%in%c(1,2)){
                     ## probability to stop for futility at previous interim analysis and conclude efficacy
                     pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,-Inf,ck.unrestricted[iStage]),   
                                                     upper = c(iUk,lk_orig[iStage],Inf),
                                                     mean = theta[iIndex],
-                                                    sigma= iSigma)
+                                                    sigma= iSigma, abseps = abseps)
                     
                 }
             }
@@ -308,7 +311,7 @@ FinalPvalue <- function(Info.d,
         correction <- mvtnorm::pmvnorm(lower = c(iLk,ck.unrestricted[k]),  
                                        upper = c(iUk,ck[k]),
                                        mean = theta[iIndex],
-                                       sigma = sigmaZm[iIndex,iIndex,drop=FALSE])
+                                       sigma = sigmaZm[iIndex,iIndex,drop=FALSE], abseps = abseps)
     
         pval <- pval + correction
         attr(pval,"correction") <- correction
@@ -318,7 +321,7 @@ FinalPvalue <- function(Info.d,
         pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,statistic-shift),  
                                         upper = c(iUk,Inf),
                                         mean = theta[iIndex],
-                                        sigma= sigmaZm[iIndex,iIndex,drop=FALSE])
+                                        sigma= sigmaZm[iIndex,iIndex,drop=FALSE], abseps = abseps)
 
     }else if(method == 3 && reason.interim[k]=="futility"){ ## is it a decision analysis after stopping at interim for futility (method 3)
         
@@ -329,20 +332,20 @@ FinalPvalue <- function(Info.d,
       pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,lk[k]),  
                                       upper = c(iUk,uk[k]),
                                       mean = theta[iIndex_interim],
-                                      sigma = sigmaZm[iIndex_interim,iIndex_interim,drop=FALSE])
+                                      sigma = sigmaZm[iIndex_interim,iIndex_interim,drop=FALSE], abseps = abseps)
       
       ## prob to stop for futility at interim and conclude a more extreme result 
       pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,-Inf,statistic_nocor),   
                                       upper = c(iUk,lk_orig[k],Inf),
                                       mean = theta[iIndex],
-                                      sigma = sigmaZm[iIndex,iIndex,drop=FALSE])
+                                      sigma = sigmaZm[iIndex,iIndex,drop=FALSE], abseps = abseps)
       
       
       ## prob to stop for efficacy at interim and conclude more extreme result (use min of critval and statistic as stopping for eff and z_k>c_k will result in efficacy conclusion (always more extreme than concluding futility, which is the case when stopping for futility at interim for Method 3 as flips from fut to eff not allowed))
       pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,uk[k],min(ck.unrestricted[k],statistic_nocor)), #OLD -shift here, note that shift=0 if statistic < critval, so shift is only subtracted for more extreme results that would have resulted in efficacy
                                       upper = c(iUk,Inf,Inf),
                                       mean = theta[iIndex],
-                                      sigma = sigmaZm[iIndex,iIndex,drop=FALSE])
+                                      sigma = sigmaZm[iIndex,iIndex,drop=FALSE], abseps = abseps)
       
       #if((statistic >= critval) & (ck[k]>ck.unrestricted[k]) & continuity.correction==1){
       #  ## continuity correction when stopping for efficacy
@@ -365,12 +368,12 @@ FinalPvalue <- function(Info.d,
             correction <- mvtnorm::pmvnorm(lower = c(iLk,uk[k],ck.unrestricted[k]),  
                                            upper = c(iUk,Inf,ck[k]),
                                            mean = theta[iIndex],
-                                           sigma = sigmaZm[iIndex,iIndex,drop=FALSE])
+                                           sigma = sigmaZm[iIndex,iIndex,drop=FALSE], abseps = abseps)
             if(method%in%c(1,2)){
                 correction <- correction + mvtnorm::pmvnorm(lower = c(iLk,-Inf,ck.unrestricted[k]),  
                                                             upper = c(iUk,lk_orig[k],ck[k]),
                                                             mean = theta[iIndex],
-                                                            sigma = sigmaZm[iIndex,iIndex,drop=FALSE])
+                                                            sigma = sigmaZm[iIndex,iIndex,drop=FALSE], abseps = abseps)
             }
             pval <- pval + correction
             attr(pval,"correction") <- correction
@@ -382,14 +385,14 @@ FinalPvalue <- function(Info.d,
             pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,lk[k]),  
                                             upper = c(iUk,uk[k]),
                                             mean = theta[iIndex_interim],
-                                            sigma = sigmaZm[iIndex_interim,iIndex_interim,drop=FALSE])
+                                            sigma = sigmaZm[iIndex_interim,iIndex_interim,drop=FALSE], abseps = abseps)
             
             if(method%in%3){
               ## prob to stop for futility at interim and conclude a more extreme result (this should only be added in case of futility for method 3, as for method 3 flips from fut to eff are not allowed and a futile result should not be considered more extreme than a positive result)
               pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,-Inf,statistic),
                                               upper = c(iUk,lk_orig[k],Inf),
                                               mean = theta[iIndex],
-                                              sigma = sigmaZm[iIndex,iIndex,drop=FALSE])
+                                              sigma = sigmaZm[iIndex,iIndex,drop=FALSE], abseps = abseps)
             }
         }
 
@@ -397,7 +400,7 @@ FinalPvalue <- function(Info.d,
         pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,uk[k],statistic - shift),  
                                         upper = c(iUk,Inf,Inf),
                                         mean = theta[iIndex],
-                                        sigma = sigmaZm[iIndex,iIndex,drop=FALSE])
+                                        sigma = sigmaZm[iIndex,iIndex,drop=FALSE], abseps = abseps)
 
         if(method%in%c(1,2)){
              
@@ -405,7 +408,7 @@ FinalPvalue <- function(Info.d,
             pval <- pval + mvtnorm::pmvnorm(lower = c(iLk,-Inf,statistic - shift),   
                                             upper = c(iUk,lk_orig[k],Inf),
                                             mean = theta[iIndex],
-                                            sigma = sigmaZm[iIndex,iIndex,drop=FALSE])
+                                            sigma = sigmaZm[iIndex,iIndex,drop=FALSE], abseps = abseps)
                         
         }
     }
@@ -452,6 +455,9 @@ FinalPvalue2 <- function(Info.d,
                          continuity.correction){
 
     requireNamespace("mvtnorm")
+    # Method 3 already uses 1e-6 for planning.
+    # For other methods, retain mvtnorm::GenzBretz()'s default of 1e-3.
+    abseps <- if (method == 3) 1e-6 else 1e-3
 
     ## ** extract 
     stage <- length(Info.d)
@@ -508,7 +514,7 @@ FinalPvalue2 <- function(Info.d,
                 iOut <- pmvnorm2(lower = c(lk.continue[iSeq_interimM1], Fstatistic),  
                                  upper = c(uk[iSeq_interimM1],                 Inf),
                                  mean = delta * sqrt(Info.vec[iIndex]),
-                                 sigma = Info.matrix[iIndex,iIndex,drop=FALSE])
+                                 sigma = Info.matrix[iIndex,iIndex,drop=FALSE], abseps = abseps)
 
                 attr(iOut,"terms") <- stats::setNames(c(as.numeric(iOut),0,0), c("efficacy","reversal","continue"))
 
@@ -522,14 +528,14 @@ FinalPvalue2 <- function(Info.d,
                     iTerm1 <- pmvnorm2(lower = c(lk.continue[iSeq_interimM1], uk[iStage], ck.unrestricted[iStage]),  
                                        upper = c(uk[iSeq_interimM1],                 Inf,        Inf),
                                        mean = delta * sqrt(Info.vec[iIndex]),
-                                       sigma = Info.matrix[iIndex,iIndex,drop=FALSE])
+                                       sigma = Info.matrix[iIndex,iIndex,drop=FALSE], abseps = abseps)
 
                     ## 2- probability to stop for futility and conclude efficacy
                     if(method %in% 1:2){
                         iTerm2 <- pmvnorm2(lower = c(lk.continue[iSeq_interimM1], -Inf,       ck.unrestricted[iStage]),   
                                            upper = c(uk[iSeq_interimM1],          lk[iStage], Inf),
                                            mean = delta * sqrt(Info.vec[iIndex]),
-                                           sigma = Info.matrix[iIndex,iIndex,drop=FALSE])
+                                           sigma = Info.matrix[iIndex,iIndex,drop=FALSE], abseps = abseps)
                     }else{
                         iTerm2 <- 0
                     }
@@ -543,7 +549,7 @@ FinalPvalue2 <- function(Info.d,
                     iTerm1 <- pmvnorm2(lower = c(lk.continue[iSeq_interimM1], uk[iStage], Fstatistic),  
                                        upper = c(uk[iSeq_interimM1],                 Inf,        Inf),
                                        mean = delta * sqrt(Info.vec[iIndex]),
-                                       sigma = Info.matrix[iIndex,iIndex,drop=FALSE])
+                                       sigma = Info.matrix[iIndex,iIndex,drop=FALSE], abseps = abseps)
 
                     ## 2- probability to stop for futility and have a more extreme test statistic
                     ## With method 3, stopping recruitement for futility implies concluding futility and can thus only be more extreme when concluding futility
@@ -553,7 +559,7 @@ FinalPvalue2 <- function(Info.d,
                         iTerm2 <- pmvnorm2(lower = c(lk.continue[iSeq_interimM1], -Inf,       Fstatistic),   
                                            upper = c(uk[iSeq_interimM1],          lk[iStage], Inf),
                                            mean = delta * sqrt(Info.vec[iIndex]),
-                                           sigma = Info.matrix[iIndex,iIndex,drop=FALSE])
+                                           sigma = Info.matrix[iIndex,iIndex,drop=FALSE], abseps = abseps)
                     }else{
                         iTerm2 <- 0
                     }
@@ -565,7 +571,7 @@ FinalPvalue2 <- function(Info.d,
                         iTerm3 <- pmvnorm2(lower = c(lk.continue[iSeq_interimM1], lk.continue[stage]),
                                            upper = c(uk[iSeq_interimM1],          uk[stage]),
                                            mean = delta * sqrt(Info.vec[iIndex_interim]),
-                                           sigma = Info.matrix[iIndex_interim,iIndex_interim,drop=FALSE])
+                                           sigma = Info.matrix[iIndex_interim,iIndex_interim,drop=FALSE], abseps = abseps)
                     }else{
                         iTerm3 <- 0
                     }

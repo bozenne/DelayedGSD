@@ -83,6 +83,9 @@ Method3 <- function(rho_alpha=2,
                     mycoefMax= 1.2,
                     mycoefL=1,     
                     myseed=2902){
+    # Tolerance for finding boundary values.
+    root_tol <- min(1e-8, abseps)
+
     require(mvtnorm)
     ## {{{ set seed
     if(!is.null(myseed)){
@@ -284,7 +287,7 @@ Method3 <- function(rho_alpha=2,
                 abseps = abseps) - IncAlpha[1]
     }
   
-    uk[1] <- uniroot(find.uk,lower=-10,upper=10)$root  #dirty solution to use -10 and 10 for bounds
+    uk[1] <- uniroot(find.uk,lower=-10,upper=10, tol = root_tol)$root  #dirty solution to use -10 and 10 for bounds
   
     #futility boundary
     find.lk <- function(x){
@@ -308,7 +311,7 @@ Method3 <- function(rho_alpha=2,
                     abseps = abseps) - IncBeta[1]
     
     }
-    lk[1] <- uniroot(find.lk,lower=uk[1]-10,upper=uk[1])$root  #dirty solution to use -10 for lower bound
+    lk[1] <- uniroot(find.lk,lower=uk[1]-10,upper=uk[1], tol = root_tol)$root  #dirty solution to use -10 for lower bound
   
     thealpha[1] <- IncAlpha[1]   
     thebeta[1] <- IncBeta[1]
@@ -352,7 +355,7 @@ Method3 <- function(rho_alpha=2,
                                                              abseps = abseps) - IncAlpha[k]},
                                          lower = lk[k-1],
                                          upper = uk[k-1],
-                                         tol = abseps)$root, silent = TRUE)
+                                         tol = root_tol)$root, silent = TRUE)
                 }else{
                     try(uk[k] <- uniroot(function(x){pmvnorm(lower = c(TheLowerValues,x),
                                                              upper = c(uk[1:(k-1)],Inf),
@@ -361,7 +364,7 @@ Method3 <- function(rho_alpha=2,
                                                              abseps = abseps) - IncAlpha[k]},
                                          lower = lk[k-1],
                                          upper = uk[k-1],
-                                         tol = abseps)$root, silent = TRUE)
+                                         tol = root_tol)$root, silent = TRUE)
                 }        
                 IsbkOK <- !(uk[k]==((uk[k-1] + lk[k-1])/2))
                 if(!IsbkOK){warning(paste0("Could not compute uk[",k,"]"))}        
@@ -388,7 +391,7 @@ Method3 <- function(rho_alpha=2,
                                         sigma= sigmaZk2,
                                         abseps = abseps) - IncBeta[k]
                         }
-                        lk[k] <- try(uniroot(find.lkk,lower=uk[k]-10,upper=uk[k])$root)              
+                        lk[k] <- try(uniroot(find.lkk,lower=uk[k]-10,upper=uk[k], tol = root_tol)$root)
                         if(inherits(lk[k], "try-error")){
                             lk[k] <- uk[k] # just to handle cases in which there is no root
                             warning(paste0("try-error for calculation of lk[",k,"]"))
@@ -403,7 +406,7 @@ Method3 <- function(rho_alpha=2,
                                                                  abseps = abseps) - IncBeta[k]},
                                              lower = lk[k-1], 
                                              upper = uk[k], 
-                                             tol = abseps)$root, silent = TRUE)
+                                             tol = root_tol)$root, silent = TRUE)
                         if(inherits(lk[k],"try-error")){warning("try-error for calculation of lk[Kmax]")}              
                     }
                     #----------------------------
