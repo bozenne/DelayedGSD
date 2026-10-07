@@ -21,7 +21,9 @@ Update or select global options for the DelayedGSD package.
 The options are: \itemize{
 \item FCT.p_value [character]: function to evaluate p-values (FinalPvalue or FinalPvalue2)
 \item continuity.correction [0,1,2]: correction used to evaluate the p-value when using \code{cNotBelowFixedc=TRUE}. Positive values ensures continuity of the p-value across stages.
-\item tolerance [numeric,>0]: acceptable discrepancy to the objective level when evaluating the confidence intervals and median unbiased estimate.
+\item tolerance [numeric,>0]: acceptable discrepancy to the objective level when evaluating the confidence intervals and median unbiased estimate. NULL restores the package default.
+\item root.tol [numeric,>0 or NULL]: tolerance for uniroot in Method 3. NULL resets to the default from stats::uniroot.
+\item abseps [numeric,>0 or NULL]: absolute integration tolerance in Method 3. NULL resets to the default from mvtnorm::GenzBretz.
 }
 }
 \examples{

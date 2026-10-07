@@ -164,9 +164,7 @@ FinalPvalue <- function(Info.d,
     
   
     requireNamespace("mvtnorm")
-    # Method 3 already uses 1e-6 for planning.
-    # For other methods, retain mvtnorm::GenzBretz()'s default of 1e-3.
-    abseps <- if (method == 3) 1e-6 else 1e-3
+    abseps <- if(method == 3) DelayedGSD.options()$abseps else mvtnorm::GenzBretz()$abseps
   
     ## ** reconstruct test statistic
     k <- length(Info.d)
@@ -455,9 +453,7 @@ FinalPvalue2 <- function(Info.d,
                          continuity.correction){
 
     requireNamespace("mvtnorm")
-    # Method 3 already uses 1e-6 for planning.
-    # For other methods, retain mvtnorm::GenzBretz()'s default of 1e-3.
-    abseps <- if (method == 3) 1e-6 else 1e-3
+    abseps <- if(method == 3) DelayedGSD.options()$abseps else mvtnorm::GenzBretz()$abseps
 
     ## ** extract 
     stage <- length(Info.d)

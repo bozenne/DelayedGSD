@@ -27,7 +27,9 @@
 #' @details The options are: \itemize{
 #' \item FCT.p_value [character]: function to evaluate p-values (FinalPvalue or FinalPvalue2)
 #' \item continuity.correction [0,1,2]: correction used to evaluate the p-value when using \code{cNotBelowFixedc=TRUE}. Positive values ensures continuity of the p-value across stages.
-#' \item tolerance [numeric,>0]: acceptable discrepancy to the objective level when evaluating the confidence intervals and median unbiased estimate.
+#' \item tolerance [numeric,>0]: acceptable discrepancy to the objective level when evaluating the confidence intervals and median unbiased estimate. NULL restores the package default.
+#' \item root.tol [numeric,>0 or NULL]: tolerance for uniroot in Method 3. NULL resets to the default from stats::uniroot.
+#' \item abseps [numeric,>0 or NULL]: absolute integration tolerance in Method 3. NULL resets to the default from mvtnorm::GenzBretz.
 #' }
 #'
 #' @return A list containing the default options.
@@ -45,7 +47,10 @@ DelayedGSD.options <- function(..., reinitialise = FALSE){
     default <- list(FCT.p_value = "FinalPvalue2",
                     continuity.correction = 1,
                     max.p = 1,
-                    tolerance = 1e-3)
+                    tolerance = 1e-3,
+                    root.tol = eval(formals(stats::uniroot)$tol,
+                                    envir = environment(stats::uniroot)),
+                    abseps = mvtnorm::GenzBretz()$abseps)
     
     if (reinitialise == TRUE) {
         assign(".DelayedGSD-options", 
@@ -56,6 +61,11 @@ DelayedGSD.options <- function(..., reinitialise = FALSE){
     
     }else{
         args <- list(...)
+        for(option in intersect(c("root.tol", "abseps", "tolerance"), names(args))){
+            if(is.null(args[[option]])){
+                args[[option]] <- default[[option]]
+            }
+        }
 
         if(!is.null(names(args))){
             object <- get(".DelayedGSD-options", envir = DelayedGSD.env)
@@ -81,6 +91,15 @@ DelayedGSD.options <- function(..., reinitialise = FALSE){
             valid.FCT <- c("FinalPvalue","FinalPvalue2","FinalPvalue3")
             if("FCT.p_value" %in% names(args) && (any(args$FCT.p_value %in% valid.FCT == FALSE) || length(args$FCT.p_value)!=1)){
                 stop("Argument \'FCT.p_value\' must be one of \"",paste(valid.FCT, collapse ="\", \""),"\".\n")
+            }
+            for(option in intersect(c("root.tol", "abseps"), names(args))){
+                value <- args[[option]]
+                if(!(is.numeric(value) && !is.complex(value) &&
+                     length(value) == 1L && is.finite(value) && value > 0)){
+                    stop("Argument '", option,
+                         "' must be NULL or one finite, strictly positive number.",
+                         call. = FALSE)
+                }
             }
             if("tolerance" %in% names(args) && (!is.numeric(args$tolerance) || any(args$tolerance<=0) || length(args$tolerance)!=1)){
                 stop("Argument \'tolerance\' must be a strictly positive number.\n")

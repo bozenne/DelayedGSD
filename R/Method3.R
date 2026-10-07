@@ -31,7 +31,7 @@
 #' @param InfoR.i Expected or observed (wherever possible) information rates at the interim analyses 1:(Kmax-1)
 #' @param InfoR.d Expected or observed information rates at all potential decision and final analyses 1:Kmax
 #' @param delta expected effect under the alternative (should be on the scale of the test statistc for which If and Info.max relate to one over the variance, e.g. delta=expected log(Hazard ratio))
-#' @param abseps tolerance for precision when finding roots or computing integrals
+#' @details Numerical integration and root-finding tolerances are read from \code{DelayedGSD.options()}.
 #' @param alternative a character string specifying the alternative hypothesis, \code{"greater"} or \code{"less"}.
 #' H0 \eqn{\theta=0} vs H1 \eqn{theta<0} (\code{"less"}) or theta > 0 (\code{"greater"}).
 #' Note that in Jennison and Turnbull's book chapter (2013) they consider greater.
@@ -48,6 +48,8 @@
 #' ## Example to check that code matches
 #' ## to reproduce bounds from CJ DSBS course slide 106
 #'               
+#' old.options <- DelayedGSD.options()
+#' DelayedGSD.options(abseps = 1e-6, root.tol = 1e-8)
 #' bCJ2 <- Method3(rho_alpha=1.345,
 #'            rho_beta=1.345,
 #'            alpha=0.025,
@@ -58,8 +60,9 @@
 #'            InfoR.i=c(3.5,6.75)/12,
 #'            InfoR.d=c(5.5,8.75,12)/12,
 #'            delta=1,  
-#'            abseps = 1e-06, 
 #'            alternative="greater")
+#' DelayedGSD.options(abseps = old.options$abseps,
+#'                    root.tol = old.options$root.tol)
 
 
 ## * Method 3 (code)
@@ -74,7 +77,6 @@ Method3 <- function(rho_alpha=2,
                     InfoR.i=NULL,
                     InfoR.d=NULL,
                     delta=0,     
-                    abseps = 1e-06,
                     alternative="greater",
                     Trace=FALSE,
                     nWhileMax=30,
@@ -83,8 +85,9 @@ Method3 <- function(rho_alpha=2,
                     mycoefMax= 1.2,
                     mycoefL=1,     
                     myseed=2902){
-    # Tolerance for finding boundary values.
-    root_tol <- min(1e-8, abseps)
+    numerical <- DelayedGSD.options()
+    abseps <- numerical$abseps
+    root_tol <- numerical$root.tol
 
     require(mvtnorm)
     ## {{{ set seed
@@ -170,7 +173,6 @@ Method3 <- function(rho_alpha=2,
                       InfoR.i=InfoR.i,
                       InfoR.d=InfoR.d,
                       delta=delta,
-                      abseps=abseps,
                       toldiff=toldiff,
                       alternative="greater",
                       Trace=FALSE)
@@ -198,7 +200,6 @@ Method3 <- function(rho_alpha=2,
                               InfoR.i=InfoR.i,
                               InfoR.d=InfoR.d,
                               delta=delta,
-                              abseps=abseps,
                               toldiff=toldiff,
                               alternative="greater")
                 thediff <- abs(xx$boundaries[Kmax,"uk"]-xx$boundaries[Kmax,"lk"])

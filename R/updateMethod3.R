@@ -11,7 +11,6 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
                           lk = NULL,            # futility boundary from the previous interim analyses or planning
                           k = NULL, type.k = NULL, ImaxAnticipated = FALSE, # current stage, type of analysis, and conclusion for all previous analyses
                           delta=0,              # expected effect under the alternative (should be on the scale of the test statistc for which If and Info.max relate to one over the variance, e.g. delta=expected log(Hazard ratio))
-                          abseps = 1e-06,       # tolerance for precision when finding roots or computing integrals
                           alternative="greater",   # greater is for Ho= theta > 0, "less" is for Ho= theta < 0 (note that in Jennison and Turnbull's book chapter (2013) they consider less)
                           binding=FALSE,         # whether the futility boundary is binding
                           Trace=FALSE,          # Used only if Info.max=NULL. Whether to print informations to follow the progression of the (root finding) algorithm to compute Info.max (from  alpha, beta, delta and Kmax).
@@ -22,8 +21,9 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
                           mycoefL=1,            # Used only if Info.max=NULL. Lower limit of the interval (see mycoefMax)
                           myseed=2902           # seed for producing reproducible results. Because we call functions which are based on Monte-Carlo compuation (pmvnorm)
                           ){
-    # Tolerance for finding boundary values.
-    root_tol <- min(1e-8, abseps)
+    numerical <- DelayedGSD.options()
+    abseps <- numerical$abseps
+    root_tol <- numerical$root.tol
 
     ## {{{ set seed
     if(!is.null(myseed)){

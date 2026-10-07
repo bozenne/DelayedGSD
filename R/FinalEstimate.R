@@ -38,6 +38,8 @@ FinalEstimate <- function(Info.d,
                           tolerance,
                           FCT.p_value){ 
 
+    root_tol <- if(method == 3) DelayedGSD.options()$root.tol else 1e-10
+
     f <- function(delta){
         do.call(FCT.p_value, list(Info.d=Info.d,
                                   Info.i=Info.i,
@@ -70,7 +72,7 @@ FinalEstimate <- function(Info.d,
                               lower = lowerBound[1],
                               upper = upperBound[1],
                               extendInt = "yes",
-                              tol = 1e-10),
+                              tol = root_tol),
                silent = TRUE)
 
     if(!inherits(res,"try-error") && !is.null(attr(res$f.root,"error")) && max(attr(res$f.root,"error"))>(tolerance/10)){

@@ -21,7 +21,9 @@ library(gsDesign)
 test_that("Boundary calculation with non-binding futility following Jennison Method 3",{
   ## slide 106 from CJ_DSBS-v5.pdf
   
-  bCJ <- Method3(rho_alpha=1.345,
+  old.options <- DelayedGSD.options()
+  DelayedGSD.options(abseps = 1e-6, root.tol = 1e-8)
+  bCJ <- tryCatch(Method3(rho_alpha=1.345,
                       rho_beta=1.345,
                       alpha=0.025,
                       beta=0.1,
@@ -30,9 +32,10 @@ test_that("Boundary calculation with non-binding futility following Jennison Met
                       InfoR.i=c(3.5,6.75)/12,
                       InfoR.d=c(5.5,8.75,12)/12,
                       delta=1,  
-                      abseps = 1e-06, 
                       alternative="greater"
-  )
+  ),
+  finally = DelayedGSD.options(abseps = old.options$abseps,
+                     root.tol = old.options$root.tol))
   expect_equal(round(bCJ$boundaries$lk,3), c(-0.409,0.664,2.069))
   expect_equal(round(bCJ$boundaries$uk,3), c(2.437,2.244,2.069))
   expect_equal(round(bCJ$boundaries$ck,3), c(1.960,1.960,2.069))

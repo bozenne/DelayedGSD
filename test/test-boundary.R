@@ -46,7 +46,9 @@ test_that("Boundary calculation with non-binding futility following Jennison met
     expect_equal(round(bCJ$boundaries$c.k,3), c(1.960,1.960,NA))
     
 
-    bCJ2 <- Method3(rho_alpha=1.345,
+    old.options <- DelayedGSD.options()
+    DelayedGSD.options(abseps = 1e-6, root.tol = 1e-8)
+    bCJ2 <- tryCatch(Method3(rho_alpha=1.345,
                     rho_beta=1.345,
                     alpha=0.025,
                     beta=0.1,
@@ -56,9 +58,10 @@ test_that("Boundary calculation with non-binding futility following Jennison met
                     InfoR.i=c(3.5,6.75)/12,
                     InfoR.d=c(5.5,8.75,12)/12,
                     delta=1,  
-                    abseps = 1e-06, 
                     alternative="greater"
-                    )
+                    ),
+    finally = DelayedGSD.options(abseps = old.options$abseps,
+                       root.tol = old.options$root.tol))
 
 
     expect_equal(round(bCJ2$boundaries$lk,3), c(-0.409,0.664,2.069))

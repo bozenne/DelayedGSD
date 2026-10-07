@@ -15,7 +15,6 @@ Method3(
   InfoR.i = NULL,
   InfoR.d = NULL,
   delta = 0,
-  abseps = 1e-06,
   alternative = "greater",
   Trace = FALSE,
   nWhileMax = 30,
@@ -45,8 +44,6 @@ Method3(
 
 \item{delta}{expected effect under the alternative (should be on the scale of the test statistc for which If and Info.max relate to one over the variance, e.g. delta=expected log(Hazard ratio))}
 
-\item{abseps}{tolerance for precision when finding roots or computing integrals}
-
 \item{alternative}{a character string specifying the alternative hypothesis, \code{"greater"} or \code{"less"}.
 H0 \eqn{\theta=0} vs H1 \eqn{theta<0} (\code{"less"}) or theta > 0 (\code{"greater"}).
 Note that in Jennison and Turnbull's book chapter (2013) they consider greater.}
@@ -70,10 +67,15 @@ Note that in Jennison and Turnbull's book chapter (2013) they consider greater.}
 \description{
 Calculate boundaries for a group sequential design with delayed endpoints based on planned and/or observed information using an error spending approach. The function gives the boundaries for a non-binding futility rule using Method 2 as proposed by Hampson and Jennison.
 }
+\details{
+Numerical integration and root-finding tolerances are read from \code{DelayedGSD.options()}.
+}
 \examples{
 ## Example to check that code matches
 ## to reproduce bounds from CJ DSBS course slide 106
               
+old.options <- DelayedGSD.options()
+DelayedGSD.options(abseps = 1e-6, root.tol = 1e-8)
 bCJ2 <- Method3(rho_alpha=1.345,
            rho_beta=1.345,
            alpha=0.025,
@@ -84,6 +86,7 @@ bCJ2 <- Method3(rho_alpha=1.345,
            InfoR.i=c(3.5,6.75)/12,
            InfoR.d=c(5.5,8.75,12)/12,
            delta=1,  
-           abseps = 1e-06, 
            alternative="greater")
+DelayedGSD.options(abseps = old.options$abseps,
+                   root.tol = old.options$root.tol)
 }

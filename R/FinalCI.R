@@ -41,6 +41,8 @@ FinalCI <- function(Info.d,
                     conclusion,                    
                     FCT.p_value){
 
+    root_tol <- if(method == 3) DelayedGSD.options()$root.tol else 1e-10
+
     alpha <- 1 - conf.level
     se <- estimate/statistic ## equal to sqrt(1/Info.d[length(Info.d)]) except when decreasing information
 
@@ -74,7 +76,7 @@ FinalCI <- function(Info.d,
                                lower = lowerBound[1],
                                upper = upperBound[1],
                                extendInt = "upX",
-                               tol = 1e-10), silent = TRUE)
+                               tol = root_tol), silent = TRUE)
     
     if(!inherits(lbnd,"try-error") && !is.null(attr(lbnd$f.root,"error")) && max(attr(lbnd$f.root,"error"))>(tolerance/10)){
         ## f is stochastic due to numerical approximations so by chance is may be above tolerance
@@ -108,7 +110,7 @@ FinalCI <- function(Info.d,
                                lower = lowerBound[2],
                                upper = upperBound[2],
                                extendInt = "downX",
-                               tol = 1e-10), silent = TRUE)
+                               tol = root_tol), silent = TRUE)
 
     if(!inherits(ubnd,"try-error") && !is.null(attr(ubnd$f.root,"error")) && max(attr(ubnd$f.root,"error"))>(tolerance/10)){
         ## f is stochastic due to numerical approximations so by chance is may be above tolerance

@@ -16,7 +16,7 @@
 ### Code:
 
 ## * pmvnorm2 (code)
-pmvnorm2 <- function(lower, upper, mean, sigma, digits = 9, abseps = 1e-3){
+pmvnorm2 <- function(lower, upper, mean, sigma, digits = 9, abseps = mvtnorm::GenzBretz()$abseps){
 
     if(!is.matrix(sigma) && is.vector(sigma) && length(sigma)==length(lower)){
         info <- sigma
