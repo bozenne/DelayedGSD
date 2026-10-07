@@ -31,7 +31,7 @@
 #' @param InfoR.i Expected or observed (wherever possible) information rates at the interim analyses 1:(Kmax-1)
 #' @param InfoR.d Expected or observed information rates at all potential decision and final analyses 1:Kmax
 #' @param delta expected effect under the alternative (should be on the scale of the test statistc for which If and Info.max relate to one over the variance, e.g. delta=expected log(Hazard ratio))
-#' @param abseps tolerance for precision when finding roots or computing integrals
+#' @details Numerical integration and root-finding tolerances are read from \code{DelayedGSD.options()}.
 #' @param alternative a character string specifying the alternative hypothesis, \code{"greater"} or \code{"less"}.
 #' H0 \eqn{\theta=0} vs H1 \eqn{theta<0} (\code{"less"}) or theta > 0 (\code{"greater"}).
 #' Note that in Jennison and Turnbull's book chapter (2013) they consider greater.
@@ -48,6 +48,8 @@
 #' ## Example to check that code matches
 #' ## to reproduce bounds from CJ DSBS course slide 106
 #'               
+#' old.options <- DelayedGSD.options()
+#' DelayedGSD.options(abseps = 1e-6, root.tol = 1e-8)
 #' bCJ2 <- Method3(rho_alpha=1.345,
 #'            rho_beta=1.345,
 #'            alpha=0.025,
@@ -58,8 +60,9 @@
 #'            InfoR.i=c(3.5,6.75)/12,
 #'            InfoR.d=c(5.5,8.75,12)/12,
 #'            delta=1,  
-#'            abseps = 1e-06, 
 #'            alternative="greater")
+#' DelayedGSD.options(abseps = old.options$abseps,
+#'                    root.tol = old.options$root.tol)
 
 
 ## * Method 3 (code)
@@ -74,7 +77,6 @@ Method3 <- function(rho_alpha=2,
                     InfoR.i=NULL,
                     InfoR.d=NULL,
                     delta=0,     
-                    abseps = 1e-06,
                     alternative="greater",
                     Trace=FALSE,
                     nWhileMax=30,
@@ -83,6 +85,10 @@ Method3 <- function(rho_alpha=2,
                     mycoefMax= 1.2,
                     mycoefL=1,     
                     myseed=2902){
+    numerical <- DelayedGSD.options()
+    abseps <- numerical$abseps
+    root_tol <- numerical$root.tol
+
     require(mvtnorm)
     ## {{{ set seed
     if(!is.null(myseed)){
@@ -167,7 +173,6 @@ Method3 <- function(rho_alpha=2,
                       InfoR.i=InfoR.i,
                       InfoR.d=InfoR.d,
                       delta=delta,
-                      abseps=abseps,
                       toldiff=toldiff,
                       alternative="greater",
                       Trace=FALSE)
@@ -195,7 +200,6 @@ Method3 <- function(rho_alpha=2,
                               InfoR.i=InfoR.i,
                               InfoR.d=InfoR.d,
                               delta=delta,
-                              abseps=abseps,
                               toldiff=toldiff,
                               alternative="greater")
                 thediff <- abs(xx$boundaries[Kmax,"uk"]-xx$boundaries[Kmax,"lk"])
@@ -284,7 +288,7 @@ Method3 <- function(rho_alpha=2,
                 abseps = abseps) - IncAlpha[1]
     }
   
-    uk[1] <- uniroot(find.uk,lower=-10,upper=10)$root  #dirty solution to use -10 and 10 for bounds
+    uk[1] <- uniroot(find.uk,lower=-10,upper=10, tol = root_tol)$root  #dirty solution to use -10 and 10 for bounds
   
     #futility boundary
     find.lk <- function(x){
@@ -308,7 +312,7 @@ Method3 <- function(rho_alpha=2,
                     abseps = abseps) - IncBeta[1]
     
     }
-    lk[1] <- uniroot(find.lk,lower=uk[1]-10,upper=uk[1])$root  #dirty solution to use -10 for lower bound
+    lk[1] <- uniroot(find.lk,lower=uk[1]-10,upper=uk[1], tol = root_tol)$root  #dirty solution to use -10 for lower bound
   
     thealpha[1] <- IncAlpha[1]   
     thebeta[1] <- IncBeta[1]
@@ -352,7 +356,7 @@ Method3 <- function(rho_alpha=2,
                                                              abseps = abseps) - IncAlpha[k]},
                                          lower = lk[k-1],
                                          upper = uk[k-1],
-                                         tol = abseps)$root, silent = TRUE)
+                                         tol = root_tol)$root, silent = TRUE)
                 }else{
                     try(uk[k] <- uniroot(function(x){pmvnorm(lower = c(TheLowerValues,x),
                                                              upper = c(uk[1:(k-1)],Inf),
@@ -361,7 +365,7 @@ Method3 <- function(rho_alpha=2,
                                                              abseps = abseps) - IncAlpha[k]},
                                          lower = lk[k-1],
                                          upper = uk[k-1],
-                                         tol = abseps)$root, silent = TRUE)
+                                         tol = root_tol)$root, silent = TRUE)
                 }        
                 IsbkOK <- !(uk[k]==((uk[k-1] + lk[k-1])/2))
                 if(!IsbkOK){warning(paste0("Could not compute uk[",k,"]"))}        
@@ -388,7 +392,7 @@ Method3 <- function(rho_alpha=2,
                                         sigma= sigmaZk2,
                                         abseps = abseps) - IncBeta[k]
                         }
-                        lk[k] <- try(uniroot(find.lkk,lower=uk[k]-10,upper=uk[k])$root)              
+                        lk[k] <- try(uniroot(find.lkk,lower=uk[k]-10,upper=uk[k], tol = root_tol)$root)
                         if(inherits(lk[k], "try-error")){
                             lk[k] <- uk[k] # just to handle cases in which there is no root
                             warning(paste0("try-error for calculation of lk[",k,"]"))
@@ -403,7 +407,7 @@ Method3 <- function(rho_alpha=2,
                                                                  abseps = abseps) - IncBeta[k]},
                                              lower = lk[k-1], 
                                              upper = uk[k], 
-                                             tol = abseps)$root, silent = TRUE)
+                                             tol = root_tol)$root, silent = TRUE)
                         if(inherits(lk[k],"try-error")){warning("try-error for calculation of lk[Kmax]")}              
                     }
                     #----------------------------

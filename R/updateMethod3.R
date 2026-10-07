@@ -11,7 +11,6 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
                           lk = NULL,            # futility boundary from the previous interim analyses or planning
                           k = NULL, type.k = NULL, ImaxAnticipated = FALSE, # current stage, type of analysis, and conclusion for all previous analyses
                           delta=0,              # expected effect under the alternative (should be on the scale of the test statistc for which If and Info.max relate to one over the variance, e.g. delta=expected log(Hazard ratio))
-                          abseps = 1e-06,       # tolerance for precision when finding roots or computing integrals
                           alternative="greater",   # greater is for Ho= theta > 0, "less" is for Ho= theta < 0 (note that in Jennison and Turnbull's book chapter (2013) they consider less)
                           binding=FALSE,         # whether the futility boundary is binding
                           Trace=FALSE,          # Used only if Info.max=NULL. Whether to print informations to follow the progression of the (root finding) algorithm to compute Info.max (from  alpha, beta, delta and Kmax).
@@ -22,6 +21,10 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
                           mycoefL=1,            # Used only if Info.max=NULL. Lower limit of the interval (see mycoefMax)
                           myseed=2902           # seed for producing reproducible results. Because we call functions which are based on Monte-Carlo compuation (pmvnorm)
                           ){
+    numerical <- DelayedGSD.options()
+    abseps <- numerical$abseps
+    root_tol <- numerical$root.tol
+
     ## {{{ set seed
     if(!is.null(myseed)){
         if(!is.null(get0(".Random.seed"))){ ## avoid error when .Random.seed do not exists, e.g. fresh R session with no call to RNG
@@ -82,7 +85,7 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
                 sigma= sigmaZk2,
                 abseps = abseps) - alphaSpent[1]
       }
-      uk[1] <- uniroot(find.uk,lower=-10,upper=10)$root  #dirty solution to use -10 and 10 for bounds
+      uk[1] <- uniroot(find.uk,lower=-10,upper=10, tol = root_tol)$root  #dirty solution to use -10 and 10 for bounds
       
       #futility boundary
       find.lk <- function(x){
@@ -100,7 +103,7 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
                   abseps = abseps) - betaSpent[1]
         
       }
-      lk[1] <- uniroot(find.lk,lower=uk[1]-10,upper=uk[1])$root  #dirty solution to use -10 for lower bound
+      lk[1] <- uniroot(find.lk,lower=uk[1]-10,upper=uk[1], tol = root_tol)$root  #dirty solution to use -10 for lower bound
                                         #ck <- cMin
     }
 
@@ -118,13 +121,13 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
               c_new <- try(uniroot(f,
                                    lower = lk[1],
                                    upper = uk[1],
-                                   tol = abseps)$root,silent=T)
+                                   tol = root_tol)$root,silent=T)
 
               if(inherits(c_new,"try-error")){
                   c_new <- try(uniroot(f,
                                        lower = lk[1]/2,
                                        upper = uk[1]*2,
-                                       tol = abseps)$root,silent=T)
+                                       tol = root_tol)$root,silent=T)
               }
 
               ck.unrestricted <- c_new              
@@ -170,7 +173,7 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
                                            abseps = abseps) - alphaSpentInc[k]},
                        lower = lk[k-1],
                        upper = 1.1*uk[k-1],
-                       tol = abseps)$root
+                       tol = root_tol)$root
       
       ## ** Estimate lk
       find.lkk <- function(x){
@@ -187,7 +190,7 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
                   sigma= sigmaZk2,
                   abseps = abseps) - betaSpentInc[k]
       }
-      lk[k] <- uniroot(find.lkk,lower=uk[k]-10,upper=uk[k])$root
+      lk[k] <- uniroot(find.lkk,lower=uk[k]-10,upper=uk[k], tol = root_tol)$root
       #ck[k] <- cMin
     }
     if(type.k %in% c("interim","decision")){
@@ -200,13 +203,13 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
         c_new <- try(uniroot(f,
                              lower = lk[k-1],
                              upper = uk[k-1],
-                             tol = abseps)$root,silent=T)
+                             tol = root_tol)$root,silent=T)
 
         if(inherits(c_new,"try-error")){
             c_new <- try(uniroot(f,
                                  lower = lk[k-1]/2,
                                  upper = uk[k-1]*2,
-                                 tol = abseps)$root,silent=T)
+                                 tol = root_tol)$root,silent=T)
         }
 
         ck.unrestricted <- c_new
@@ -231,7 +234,7 @@ updateMethod3 <- function(rho_alpha=2,          # rho parameter of the rho-famil
                                              abseps = abseps) - alphaSpentInc[k]},
                          lower = lowerRoot,
                          upper = upperRoot,
-                         tol = abseps)$root
+                         tol = root_tol)$root
       
       ## lk[k] <- uniroot(function(x){pmvnorm(lower = c(lk[1:(k-1)],-Inf),
       ##                                      upper = c(uk[1:(k-1)],x),

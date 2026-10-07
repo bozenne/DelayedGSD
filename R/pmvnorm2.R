@@ -16,7 +16,7 @@
 ### Code:
 
 ## * pmvnorm2 (code)
-pmvnorm2 <- function(lower, upper, mean, sigma, digits = 9){
+pmvnorm2 <- function(lower, upper, mean, sigma, digits = 9, abseps = mvtnorm::GenzBretz()$abseps){
 
     if(!is.matrix(sigma) && is.vector(sigma) && length(sigma)==length(lower)){
         info <- sigma
@@ -25,12 +25,12 @@ pmvnorm2 <- function(lower, upper, mean, sigma, digits = 9){
         sigma[upper.tri(sigma)] <- t(sigma)[upper.tri(sigma)]
     }
     
-    out <- mvtnorm::pmvnorm(lower = lower, upper = upper, mean = mean, sigma = sigma)
+    out <- mvtnorm::pmvnorm(lower = lower, upper = upper, mean = mean, sigma = sigma, abseps = abseps)
 
     if(is.na(out)){
         ## Handle the case where pmvnorm returns NaN, typically this is when integrating a domain with very little density.
         ## Sometimes just rounding the input help avoid NaN (which is strange)
-        out <- mvtnorm::pmvnorm(lower = round(lower,digits), upper = round(upper,digits), mean = round(mean,digits), sigma = round(sigma,digits))
+        out <- mvtnorm::pmvnorm(lower = round(lower,digits), upper = round(upper,digits), mean = round(mean,digits), sigma = round(sigma,digits), abseps = abseps)
         ## Otherwise add-hoc criteria anticipating very little density
         if(is.na(out) && any(upper+5 < mean)){
             out <- 0
