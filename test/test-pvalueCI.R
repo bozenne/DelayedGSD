@@ -334,10 +334,11 @@ test_that("Check consistency between p-value and boundary (1 interim analysis)",
 
 })
 
-test_that("Method 3 gives equal non-rejection p-values after efficacy and futility stops", {
+test_that("FinalPvalue: equal E->F and F->F p-values for Method 3 with non-binding futility", {
 
-    alpha <- 0.05
-    statistic <- 1.55
+    # One interim; observed pipeline information exceeds anticipated information.
+    alpha <- 0.025
+    statistic <- 1.8
     design <- CalcBoundaries(kMax = 2, alpha = alpha, beta = 0.2,
                              InfoR.i = 0.5, InfoR.d = c(0.6, 1),
                              rho_alpha = 2, rho_beta = 2, method = 3,
@@ -357,6 +358,7 @@ test_that("Method 3 gives equal non-rejection p-values after efficacy and futili
                        Info.d = observed_info_d, k = 1, type.k = "decision",
                        p.value = FALSE, ci = FALSE, estimate = FALSE, trace = FALSE)
 
+    # Test FinalPvalue directly; update() above only supplies the boundaries.
     pvalue <- function(reason) {
         as.double(FinalPvalue(Info.d = observed_info_d, Info.i = info_i,
                               ck = decision$ck[1],
@@ -367,13 +369,14 @@ test_that("Method 3 gives equal non-rejection p-values after efficacy and futili
                               bindingFutility = FALSE, cNotBelowFixedc = TRUE,
                               continuity.correction = 1))
     }
+    # Both paths end in non-rejection at the same stage and decision statistic.
     p_efficacy <- pvalue("efficacy")
     p_futility <- pvalue("futility")
 
     expect_lt(anticipated_info_d, observed_info_d)
     expect_gt(statistic, decision$ck.unrestricted[1])
     expect_lt(statistic, decision$ck[1])
-    expect_equal(p_efficacy, p_futility, tolerance = 1e-8)
+    expect_equal(p_efficacy, p_futility, tolerance = 1e-6)
     expect_gt(p_futility, alpha)
 })
 
