@@ -334,6 +334,52 @@ test_that("Check consistency between p-value and boundary (1 interim analysis)",
 
 })
 
+test_that("FinalPvalue: equal E->F and F->F p-values for Method 3 with non-binding futility", {
+
+    # One interim; observed pipeline information exceeds anticipated information.
+    alpha <- 0.025
+    statistic <- 1.8
+    design <- CalcBoundaries(kMax = 2, alpha = alpha, beta = 0.2,
+                             InfoR.i = 0.5, InfoR.d = c(0.6, 1),
+                             rho_alpha = 2, rho_beta = 2, method = 3,
+                             delta = 1, bindingFutility = FALSE,
+                             cNotBelowFixedc = TRUE)
+
+    info_i <- design$planned$Info.i[1]
+    anticipated_info_d <- design$planned$Info.d[1]
+    observed_info_d <- 0.65 * design$planned$Info.max
+
+    interim <- update(design,
+                      delta = (design$planned$uk[1] + 0.1) / sqrt(info_i),
+                      Info.i = info_i, Info.d = anticipated_info_d,
+                      k = 1, type.k = "interim", p.value = FALSE,
+                      ci = FALSE, estimate = FALSE, trace = FALSE)
+    decision <- update(interim, delta = statistic / sqrt(observed_info_d),
+                       Info.d = observed_info_d, k = 1, type.k = "decision",
+                       p.value = FALSE, ci = FALSE, estimate = FALSE, trace = FALSE)
+
+    # Test FinalPvalue directly; update() above only supplies the boundaries.
+    pvalue <- function(reason) {
+        as.double(FinalPvalue(Info.d = observed_info_d, Info.i = info_i,
+                              ck = decision$ck[1],
+                              ck.unrestricted = decision$ck.unrestricted[1],
+                              lk = interim$lk[1], uk = interim$uk[1],
+                              reason.interim = reason, kMax = 2,
+                              statistic = statistic, method = 3,
+                              bindingFutility = FALSE, cNotBelowFixedc = TRUE,
+                              continuity.correction = 1))
+    }
+    # Both paths end in non-rejection at the same stage and decision statistic.
+    p_efficacy <- pvalue("efficacy")
+    p_futility <- pvalue("futility")
+
+    expect_lt(anticipated_info_d, observed_info_d)
+    expect_gt(statistic, decision$ck.unrestricted[1])
+    expect_lt(statistic, decision$ck[1])
+    expect_equal(p_efficacy, p_futility, tolerance = 1e-6)
+    expect_gt(p_futility, alpha)
+})
+
 test_that("Check consistency between p-value and boundary (2 interim analysis)",{
 
   
